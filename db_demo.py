@@ -1,7 +1,28 @@
-from pa1.database.tables import SiteTable, ImageTable
+from pa1.database.tables import SiteTable, PageTypeTable, PageTable
 
 site = SiteTable()
-print(site.read_from_site())
+page_type_table = PageTypeTable()
+page_table = PageTable()
 
-image = ImageTable()
-print(image.read_from_site())
+site_insert_data = {'domain': 'test_domain',
+                    'robots_content': 'test_robots_content',
+                    'sitemap_content': 'test_sitemap_content'}
+site.insert_into_site(site_insert_data)
+
+test_site_id = site.filter_site_table(['id'], domain='test_domain')[0]
+if test_site_id:
+    test_site_id = test_site_id[0]
+
+html_page_type_code = page_type_table.filter_site_table(['code'], code='HTML')[0]
+if html_page_type_code:
+    html_page_type_code = html_page_type_code[0]
+
+page_insert_data = {'site_id': test_site_id,
+                    'page_type_code': html_page_type_code,
+                    'url': 'www.test.com',
+                    'html_content': '<a>test</a>',
+                    'http_status_code': 200,
+                    'accessed_time': None}
+
+page_table.insert_into_site(page_insert_data)
+page_table.read_from_site()

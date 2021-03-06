@@ -1,0 +1,1 @@
+# script for clearing the database
