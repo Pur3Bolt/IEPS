@@ -15,5 +15,5 @@ class GenericTable(SQLExecutor):
     def read_from_site(self, fields='*', fetch_all=True):
         return self._read_from_table(self.table, fields, fetch_all)
 
-    def filter_site_table(self, *args, **kwargs):
-        return self._filter_table(self.table, args, kwargs)
+    def filter_site_table(self, fields='*', **kwargs):
+        return self._filter_table(self.table, fields, kwargs)
