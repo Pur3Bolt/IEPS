@@ -1,56 +1,28 @@
-import psycopg2
+from pa1.database.tables import SiteTable, PageTypeTable, PageTable
 
-username = 'ieps'
-password = 'ieps123ieps!'
-host = '167.86.79.68'
-port = '5432'
-dbname = 'ieps'
-schema = 'crawldb'
+site = SiteTable()
+page_type_table = PageTypeTable()
+page_table = PageTable()
 
+site_insert_data = {'domain': 'test_domain',
+                    'robots_content': 'test_robots_content',
+                    'sitemap_content': 'test_sitemap_content'}
+site.insert_into_site(site_insert_data)
 
-def get_connection():
-    return psycopg2.connect("dbname='%s' user='%s' host='%s' password='%s'" % (dbname, username, host, password))
+test_site_id = site.filter_site_table(['id'], domain='test_domain')
+if test_site_id:
+    test_site_id = test_site_id[0].id
 
+html_page_type_code = page_type_table.filter_site_table(['code'], code='HTML')
+if html_page_type_code:
+    html_page_type_code = html_page_type_code[0].code
 
-def get_cursor(conn):
-    return conn.cursor()
+page_insert_data = {'site_id': test_site_id,
+                    'page_type_code': html_page_type_code,
+                    'url': 'www.test.com',
+                    'html_content': '<a>test</a>',
+                    'http_status_code': 200,
+                    'accessed_time': None}
 
-
-def commit(cur):
-    cur.execute("COMMIT;")
-
-
-def insert_into_site(cur, values, commit=True):
-    if cur.closed:
-        cur = get_cursor(cur.connection)
-    cur.execute("INSERT INTO %s.site(domain, robots_content, sitemap_content) VALUES %s;"
-                % (schema, str(tuple(values))))
-    if commit:
-        cur.execute("COMMIT;")
-
-
-def read_from_site(cur, f_all=True):
-    if cur.closed:
-        cur = get_cursor(cur.connection)
-    cur.execute("SELECT * FROM %s.site;" % schema)
-    if f_all:
-        return cur.fetchall()
-    else:
-        return cur.fetchone()[0]
-
-
-# 1. get connection
-connection = get_connection()
-
-# 2. get cursor
-kursor = get_cursor(connection)
-
-# 3. naredi neki z kurzorjem
-insert_into_site(kursor, ['aljaz', 'je', 'legenda'])
-
-# 4. spet pejdi po kurzor
-kursor = get_cursor(connection)
-
-# 5. preberi iz baze
-data = read_from_site(kursor)
-print("data: ", data)
+page_table.insert_into_site(page_insert_data)
+page_table.read_from_site()
