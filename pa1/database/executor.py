@@ -30,7 +30,7 @@ class SQLExecutor(Database):
             if fetch_all:
                 return cursor.fetchall()
             else:
-                return cursor.fetchone()[0]
+                return cursor.fetchone()
 
     def _filter_table(self, table, fields, data, fetch_all=True):
         filter = 'SELECT {0} FROM {1}.{2} WHERE {3}'.format(
@@ -46,4 +46,4 @@ class SQLExecutor(Database):
             if fetch_all:
                 return cursor.fetchall()
             else:
-                return cursor.fetchone()[0]
+                return cursor.fetchone()

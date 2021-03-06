@@ -9,13 +9,13 @@ site_insert_data = {'domain': 'test_domain',
                     'sitemap_content': 'test_sitemap_content'}
 site.insert_into_site(site_insert_data)
 
-test_site_id = site.filter_site_table(['id'], domain='test_domain')[0]
+test_site_id = site.filter_site_table(['id'], domain='test_domain')
 if test_site_id:
-    test_site_id = test_site_id[0]
+    test_site_id = test_site_id[0].id
 
-html_page_type_code = page_type_table.filter_site_table(['code'], code='HTML')[0]
+html_page_type_code = page_type_table.filter_site_table(['code'], code='HTML')
 if html_page_type_code:
-    html_page_type_code = html_page_type_code[0]
+    html_page_type_code = html_page_type_code[0].code
 
 page_insert_data = {'site_id': test_site_id,
                     'page_type_code': html_page_type_code,
