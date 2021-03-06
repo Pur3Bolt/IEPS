@@ -37,7 +37,7 @@ class SQLExecutor(Database):
             ','.join(fields),
             self.schema,
             table,
-            ",".join(["{0}={1}".format(k, v) for k, v in data.items()]))
+            ",".join(["{0}='{1}'".format(k, v) for k, v in data.items()]))
 
         with self.transaction() as cursor:
             query = cursor.mogrify(filter)

@@ -40,7 +40,7 @@ class Database:
             conn = self.get_connection()
         if self.cursor and not self.cursor.closed:
             return self.cursor
-        self.cursor = conn.cursor(cursor_factory=extras.DictCursor)
+        self.cursor = conn.cursor(cursor_factory=extras.NamedTupleCursor)
         return self.cursor
 
     @contextmanager
