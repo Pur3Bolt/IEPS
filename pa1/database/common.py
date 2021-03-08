@@ -9,11 +9,31 @@ class GenericTable(SQLExecutor):
         if not self.table:
             raise ValueError
 
-    def insert_into_site(self, data):
-        return self._insert_into_table(self.table, data)
+    def create(self, data):
+        return self._create(table=self.table,
+                            data=data)
 
-    def read_from_site(self, fields='*', fetch_all=True):
-        return self._read_from_table(self.table, fields, fetch_all)
+    def list(self, *args, **kwargs):
+        return self._list(table=self.table,
+                          fields=kwargs.pop('fields', '*'),
+                          fetch_all=kwargs.pop('fetch_all', True),
+                          order_by=kwargs.pop('order_by', ['-id']))
 
-    def filter_site_table(self, fields='*', **kwargs):
-        return self._filter_table(self.table, fields, kwargs)
+    def filter(self, *args, **kwargs):
+        return self._filter(table=self.table,
+                            fields=kwargs.pop('fields', '*'),
+                            data=kwargs,
+                            fetch_all=kwargs.pop('fetch_all', True),
+                            order_by=kwargs.pop('order_by', ['-id']))
+
+    def get(self, *args, **kwargs):
+        return self._filter(table=self.table,
+                            fields=kwargs.pop('fields', '*'),
+                            data=kwargs,
+                            fetch_all=kwargs.pop('fetch_all', False),
+                            order_by=kwargs.pop('order_by', ['-id']))
+
+    def update(self, *args, **kwargs):
+        return self._update(table=self.table,
+                            values=kwargs.pop('values', None) or args[0],
+                            filters=kwargs.pop('filters', None) or args[1])
