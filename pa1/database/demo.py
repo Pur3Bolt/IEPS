@@ -29,3 +29,6 @@ page_insert_data = {'site_id': test_site_id,
 page_table.create(page_insert_data)
 # list ti vrne vse
 page_table.list()
+
+# update values kjer filters
+site.update(values={'domain': 'update.to.this'}, filters={'id': test_site_id})
