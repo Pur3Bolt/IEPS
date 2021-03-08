@@ -50,6 +50,10 @@ def get_base_url(url):
     return urlparse(url).scheme + "://" + urlparse(url).netloc
 
 
+def update_ip_time(site_id):
+    return ip.update(values={'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, filters={'id': site_id})
+
+
 def init_robot_parser(url):
     """Initiates the robots.txt parser. Saves new site data to DB.
 
@@ -101,8 +105,7 @@ def init_robot_parser(url):
                        'delay': delay}
             db_ip = ip.create(ip_data)
         else:
-            db_ip = ip.update(values={'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S')},
-                              filters={'id': db_ip.id})
+            db_ip = update_ip_time(db_ip.id)
         print("IP:", db_ip)
 
         # insert domain into DB
@@ -260,6 +263,7 @@ WEB_PAGE_ADDRESS = URL_TEST_3  # TODO update with URL from frontier
 
 rp, site_db = init_robot_parser(WEB_PAGE_ADDRESS)
 
+# TODO get this data from DB (or leave it as is...) :-)
 site_ip = gethostbyname(urlparse(WEB_PAGE_ADDRESS).netloc)
 print("Site IP:", site_ip)
 db_ip = ip.get(ip_addr=site_ip)
@@ -281,21 +285,24 @@ if SELENIUM:
     TIMEOUT = 5
     sleep(TIMEOUT)
 
+    # update request time for this IP in DB
+    update_ip_time(db_ip.id)
+
+    # TODO detect duplicate website here
+
+    # TODO detect if website is HTML/text/... and save all found URLs to frontier
     elems = driver.find_elements_by_xpath("//a[@href]")
     for e in elems:
         print(e.get_attribute("href"))
         add_to_frontier(rp, site_db, e.get_attribute("href"))
 
+    # TODO store found blob(s) to DB
+
     driver.close()
-else:
+else:  # TODO probably remove this else block completely, since we will always use Selenium
     r = requests.get(WEB_PAGE_ADDRESS, headers={'User-Agent': USER_AGENT})
+
+    # update request time for this IP in DB
+    update_ip_time(db_ip.id)
+
     print(r.text)
-
-# update request time for this IP in DB
-ip.update(values={'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, filters={'id': db_ip.id})
-
-# testing
-# print(rp.can_fetch(USER_AGENT, "http://gov.si/admin/test"))
-# print(rp.can_fetch(USER_AGENT, "http://gov.si/teme/koronavirus"))
-# print(rp.can_fetch(USER_AGENT, "http://gov.si/"))
-# print(rp.can_fetch(USER_AGENT, "http://gov.si/admin"))
