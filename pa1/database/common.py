@@ -16,13 +16,15 @@ class GenericTable(SQLExecutor):
     def list(self, *args, **kwargs):
         return self._list(table=self.table,
                           fields=kwargs.pop('fields', '*'),
-                          fetch_all=kwargs.pop('fetch_all', True))
+                          fetch_all=kwargs.pop('fetch_all', True),
+                          order_by=kwargs.pop('order_by', ['-id']))
 
     def filter(self, *args, **kwargs):
         return self._filter(table=self.table,
                             fields=kwargs.pop('fields', '*'),
                             data=kwargs,
-                            fetch_all=kwargs.pop('fetch_all', True))
+                            fetch_all=kwargs.pop('fetch_all', True),
+                            order_by=kwargs.pop('order_by', ['-id']))
 
     def get(self, *args, **kwargs):
         return self._filter(table=self.table,
