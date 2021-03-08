@@ -6,13 +6,13 @@ from urllib.parse import urlparse
 from socket import gethostbyname
 from datetime import datetime
 from time import sleep
-from database.tables import SiteTable, PageTypeTable, PageTable
+import database.tables as tables
 import requests
 
-test_access_time = datetime.now()
-test_delay = 8
-site = SiteTable()
-page = PageTable()
+delay = 5
+site = tables.SiteTable()
+page = tables.PageTable()
+ip = tables.SiteIPAddrTable()
 
 
 def is_new_site(url):
@@ -29,7 +29,7 @@ def is_new_site(url):
         True if site is new, False otherwise
     """
     d = urlparse(url).netloc
-    return len(site.filter_site_table(['id'], domain=d)) == 0
+    return site.get(domain=d) is None
 
 
 def get_base_url(url):
@@ -63,20 +63,20 @@ def init_robot_parser(url):
         """
     rp = urllib.robotparser.RobotFileParser()
     domain = urlparse(url).netloc
+
+    # if domain is not in DB
     if is_new_site(url):
         # check if a request can be made (time ethics)
         site_ip = gethostbyname(domain)
         print("Site IP:", site_ip)
-        # TODO query to DB: check last accessed time on this IP
-        # TODO if no rows in response then make request immediately, else wait until allowed to make request and update time of request
-        """global test_access_time
-        global test_delay
-        if test_access_time is not None:
-            sleep_untill_allowed_request(test_access_time, test_delay)"""
+        db_ip = ip.get(ip_addr=site_ip)
+        print(db_ip)
+        if db_ip is not None:
+            sleep_untill_allowed_request(db_ip.last_access, db_ip.delay)
+            print("Pre-robots sleep complete")
 
         # make the robots.txt request
         response = requests.get(get_base_url(url) + "/robots.txt")
-        # TODO query to DB: save IP for this domain and last accessed time (now) - if IP not in DB add row, else update time only
         print('status code:', response.status_code)
         robots_text = ""
         if response.status_code == 200:
@@ -85,37 +85,48 @@ def init_robot_parser(url):
         print("robots_text:")
         print(robots_text)
         print("----****----")
-        delay = get_robots_delay(rp)
-        print("delay", delay)
         sm = rp.site_maps()  # get Sitemap param as list
         sm_data = ""
         if sm:
             print("Sitemap:", sm)
             sm_data = ';'.join(sm)
-        print("sm", sm_data)
+        print("sm str:", sm_data)
+
+        # add/update time of request for this IP
+        if db_ip is None:
+            ip_data = {'ip_addr': site_ip,
+                       'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                       'delay': delay}
+            db_ip = ip.create(ip_data)
+        else:
+            db_ip = ip.update(values={'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S')},
+                              filters={'id': db_ip.id})
+        print("IP:", db_ip)
+
+        # insert domain into DB
         site_insert_data = {'domain': domain,
                             'robots_content': robots_text,
-                            'sitemap_content': sm_data}
-        site.insert_into_site(site_insert_data)
-        new_site_id = site.filter_site_table(['id'], domain=domain)
-        if new_site_id:
-            new_site_id = new_site_id[0].id
-        print("Inserted ID", new_site_id)
-        for elt in sm:
-            page_insert_data = {'site_id': new_site_id,
-                                'page_type_code': 'FRONTIER',
-                                'url': elt}
-            page.insert_into_site(page_insert_data)
-        # test_access_time = datetime.now()
+                            'sitemap_content': sm_data,
+                            'site_ipaddr_id': db_ip.id}
+        print(site_insert_data)
+        new_site = site.create(site_insert_data)
+        print("Inserted:", new_site)
+
+        # if sitemap exists, insert URLs into frontier
+        if sm is not None:
+            for elt in sm:
+                page_insert_data = {'site_id': new_site.id,
+                                    'page_type_code': 'FRONTIER',
+                                    'url': elt}
+                new_page = page.create(page_insert_data)
+                print("Page:", new_page)
+
+    # this domain exists in the DB
     else:
-        robots_db = site.filter_site_table(['robots_content'], domain=domain)
-        if robots_db:
-            robots_content = robots_db[0].robots_content
-        print(robots_content)
-        parse_robots_data(rp, robots_content)
-        delay = get_robots_delay(rp)
-        print(delay)
-    return rp, delay
+        robots_db = site.get(domain=domain)
+        print(robots_db)
+        parse_robots_data(rp, robots_db.robots_content)
+    return rp
 
 
 def parse_robots_data(rp, data):
@@ -128,8 +139,11 @@ def parse_robots_data(rp, data):
         data : str
             The contents of the robots.txt file
         """
+    global delay
+
     lines = StringIO(data).readlines()
     rp.parse(lines)  # parse robots.txt from DB
+    delay = get_robots_delay(rp)
 
 
 def get_robots_delay(rp):
@@ -173,29 +187,29 @@ def sleep_untill_allowed_request(time_old, delay):
         sleep(sleep_time)
 
 
-URL_TEST = "http://e-prostor.gov.si/admin/test"  # TODO remove test url
-WEB_PAGE_ADDRESS = "http://gov.si"  # TODO update with URL from frontier
-USER_AGENT = "fri-wier-agmsak"
+# TODO remove test URLs
+URL_TEST = "http://e-prostor.gov.si/admin/test"
+URL_TEST_2 = "http://evem.gov.si"
+URL_TEST_3 = "http://gov.si"
 
-rp, delay = init_robot_parser(WEB_PAGE_ADDRESS)
-exit(1)
-# TODO query to DB: allowed to fetch site data or sleep?
-WEB_PAGE_ADDRESS = "http://evem.gov.si"
+USER_AGENT = "fri-wier-agmsak"
+WEB_PAGE_ADDRESS = "http://evem.gov.si"  # TODO update with URL from frontier
+
+rp = init_robot_parser(WEB_PAGE_ADDRESS)
 
 print(f"Retrieving web page URL '{WEB_PAGE_ADDRESS}'")
 
-sleep_untill_allowed_request(test_access_time, delay)
+site_ip = gethostbyname(urlparse(WEB_PAGE_ADDRESS).netloc)
+print("Site IP:", site_ip)
+db_ip = ip.get(ip_addr=site_ip)
 
-request = urllib.request.Request(
-    WEB_PAGE_ADDRESS,
-    headers={'User-Agent': USER_AGENT}
-)
+sleep_untill_allowed_request(db_ip.last_access, delay)
 
-with urllib.request.urlopen(request) as response:
-    html = response.read().decode("utf-8")
-    print(f"Retrieved Web content: \n\n'\n{html}\n'")
+r = requests.get(WEB_PAGE_ADDRESS, headers={'User-Agent': USER_AGENT})
+print(r.text)
 
-# TODO update request time in DB for IP here (process data after, so other crawlers can make request sooner)
+# update request time for this IP in DB
+ip.update(values={'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, filters={'id': db_ip.id})
 
 # testing
 # print(rp.can_fetch(USER_AGENT, "http://gov.si/admin/test"))
