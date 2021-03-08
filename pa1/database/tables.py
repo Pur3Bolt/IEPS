@@ -27,3 +27,7 @@ class PageTypeTable(GenericTable):
 
 class DataTypeTable(GenericTable):
     table = 'data_type'
+
+
+class SiteIPAddrTable(GenericTable):
+    table = 'site_ipaddr'
