@@ -1,4 +1,3 @@
-import urllib
 import urllib.robotparser
 from io import StringIO
 from math import ceil
@@ -8,6 +7,9 @@ from datetime import datetime
 from time import sleep
 import database.tables as tables
 import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+# import url
 
 delay = 5
 site = tables.SiteTable()
@@ -58,8 +60,8 @@ def init_robot_parser(url):
 
         Returns
         -------
-        RobotFileParser
-            The set-up robot parser
+        RobotFileParser, Record
+            The set-up robot parser and the Record of the query from the table site
         """
     rp = urllib.robotparser.RobotFileParser()
     domain = urlparse(url).netloc
@@ -109,13 +111,13 @@ def init_robot_parser(url):
                             'sitemap_content': sm_data,
                             'site_ipaddr_id': db_ip.id}
         print(site_insert_data)
-        new_site = site.create(site_insert_data)
-        print("Inserted:", new_site)
+        robots_db = site.create(site_insert_data)
+        print("Inserted:", robots_db)
 
         # if sitemap exists, insert URLs into frontier
         if sm is not None:
             for elt in sm:
-                page_insert_data = {'site_id': new_site.id,
+                page_insert_data = {'site_id': robots_db.id,
                                     'page_type_code': 'FRONTIER',
                                     'url': elt}
                 new_page = page.create(page_insert_data)
@@ -126,11 +128,11 @@ def init_robot_parser(url):
         robots_db = site.get(domain=domain)
         print(robots_db)
         parse_robots_data(rp, robots_db.robots_content)
-    return rp
+    return rp, robots_db
 
 
 def parse_robots_data(rp, data):
-    """Parses the passed data from robots.txt into RobotFileParser
+    """Parses the passed data from robots.txt into RobotFileParser and sets the global variable delay
 
         Parameters
         ----------
@@ -187,17 +189,76 @@ def sleep_untill_allowed_request(time_old, delay):
         sleep(sleep_time)
 
 
-# TODO remove test URLs
-URL_TEST = "http://e-prostor.gov.si/admin/test"
+def uri_validator(s):
+    """Validates if the passed string is a valid URL
+
+        Parameters
+        ----------
+        s : str
+            The string to check if is an URL
+
+        Returns
+        -------
+        bool
+            True if s is a valid URL
+        """
+    try:
+        result = urlparse(s)
+        return all([result.scheme, result.netloc, result.path])
+    except:
+        return False
+
+
+def add_to_frontier(rp, site_db, url):
+    """Adds the given URL to the frontier if permitted by rules
+
+        Parameters
+        ----------
+        rp : RobotFileParser
+            An initialised robots.txt parser for this site
+        site_db : Record
+            The DB record of this domain (from table site)
+        url : str
+            The URL to add to the frontier
+
+        Returns
+        -------
+        mixed
+            None if the URL is not allowed to be added to the frontier
+            Record of the newly inserted row into DB otherwise
+        """
+    # TODO relative URLs must be valid; URLs must be canonicalised and cleaned
+    if not uri_validator(url):
+        print("Not a URL.")
+        return None
+    elif not rp.can_fetch(USER_AGENT, url):
+        print("Not allowed to crawl this URL.")
+        return None
+    if 'gov.si' not in urlparse(url).netloc:
+        print("Not gov.si domain")
+        return None
+    page_insert_data = {'site_id': site_db.id,
+                        'page_type_code': 'FRONTIER',
+                        'url': url}
+    try:
+        new_page = page.create(page_insert_data)
+        print("Page:", new_page)
+        return new_page
+    except Exception as e:
+        # probably a duplicate URL in DB
+        print(e)
+
+
+# TODO remove test data
+URL_TEST_1 = "http://e-prostor.gov.si/"
 URL_TEST_2 = "http://evem.gov.si"
 URL_TEST_3 = "http://gov.si"
+SELENIUM = True
 
 USER_AGENT = "fri-wier-agmsak"
-WEB_PAGE_ADDRESS = "http://evem.gov.si"  # TODO update with URL from frontier
+WEB_PAGE_ADDRESS = URL_TEST_3  # TODO update with URL from frontier
 
-rp = init_robot_parser(WEB_PAGE_ADDRESS)
-
-print(f"Retrieving web page URL '{WEB_PAGE_ADDRESS}'")
+rp, site_db = init_robot_parser(WEB_PAGE_ADDRESS)
 
 site_ip = gethostbyname(urlparse(WEB_PAGE_ADDRESS).netloc)
 print("Site IP:", site_ip)
@@ -205,8 +266,30 @@ db_ip = ip.get(ip_addr=site_ip)
 
 sleep_untill_allowed_request(db_ip.last_access, delay)
 
-r = requests.get(WEB_PAGE_ADDRESS, headers={'User-Agent': USER_AGENT})
-print(r.text)
+print(f"Retrieving web page URL '{WEB_PAGE_ADDRESS}'")
+
+if SELENIUM:
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("user-agent=" + USER_AGENT)
+
+    WEB_DRIVER_LOCATION = "chromedriver"
+
+    driver = webdriver.Chrome(WEB_DRIVER_LOCATION, options=options)
+    driver.get(WEB_PAGE_ADDRESS)
+
+    TIMEOUT = 5
+    sleep(TIMEOUT)
+
+    elems = driver.find_elements_by_xpath("//a[@href]")
+    for e in elems:
+        print(e.get_attribute("href"))
+        add_to_frontier(rp, site_db, e.get_attribute("href"))
+
+    driver.close()
+else:
+    r = requests.get(WEB_PAGE_ADDRESS, headers={'User-Agent': USER_AGENT})
+    print(r.text)
 
 # update request time for this IP in DB
 ip.update(values={'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, filters={'id': db_ip.id})
