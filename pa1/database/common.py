@@ -30,4 +30,10 @@ class GenericTable(SQLExecutor):
         return self._filter(table=self.table,
                             fields=kwargs.pop('fields', '*'),
                             data=kwargs,
-                            fetch_all=kwargs.pop('fetch_all', False))
+                            fetch_all=kwargs.pop('fetch_all', False),
+                            order_by=kwargs.pop('order_by', ['-id']))
+
+    def update(self, *args, **kwargs):
+        return self._update(table=self.table,
+                            values=kwargs.pop('values', None) or args[0],
+                            filters=kwargs.pop('filters', None) or args[1])
