@@ -60,3 +60,19 @@ class SQLExecutor(Database):
                 return cursor.fetchall()
             else:
                 return cursor.fetchone()
+
+    def _update(self, table, values, filters):
+        _u = 'UPDATE {0}.{1} SET {2} WHERE {3} RETURNING *'.format(
+            self.schema,
+            table,
+            ','.join(["{0}='{1}'".format(k, v) for k, v in values.items()]),
+            ','.join(["{0}='{1}'".format(k, v) for k, v in filters.items()]))
+
+        if self.DEBUG:
+            print("update - ", _u)
+
+        with self.transaction() as cursor:
+            query = cursor.mogrify(_u)
+            cursor.execute(query)
+            _updated = cursor.fetchone()
+            return _updated
