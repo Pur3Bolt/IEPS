@@ -6,6 +6,8 @@ class Database:
     def __init__(self, autoconnect=True):
         super(Database, self).__init__()
 
+        self.DEBUG = False
+
         self.username = 'ieps'
         self.password = 'ieps123ieps!'
         self.host = '167.86.79.68'
@@ -25,6 +27,9 @@ class Database:
             cur.execute("SELECT 1;")
             return True
 
+    def set_debug(self, value=True):
+        self.DEBUG = value
+
     def get_connection(self):
         if self.connection and not self.connection.closed:
             return self.connection
@@ -40,7 +45,7 @@ class Database:
             conn = self.get_connection()
         if self.cursor and not self.cursor.closed:
             return self.cursor
-        self.cursor = conn.cursor(cursor_factory=extras.DictCursor)
+        self.cursor = conn.cursor(cursor_factory=extras.NamedTupleCursor)
         return self.cursor
 
     @contextmanager
