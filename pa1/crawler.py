@@ -83,6 +83,16 @@ def init_robot_parser(url):
 
         # make the robots.txt request
         response = requests.get(get_base_url(url) + "/robots.txt")
+
+        # add/update time of request for this IP
+        if db_ip is None:
+            ip_data = {'ip_addr': site_ip,
+                       'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                       'delay': delay}
+            db_ip = ip.create(ip_data)
+        else:
+            update_ip_time(db_ip.id)
+
         print('status code:', response.status_code)
         robots_text = ""
         if response.status_code == 200:
@@ -94,18 +104,12 @@ def init_robot_parser(url):
         sm = rp.site_maps()  # get Sitemap param as list
         sm_data = ""
         if sm:
-            print("Sitemap:", sm)
-            sm_data = ';'.join(sm)
+            sleep_untill_allowed_request(db_ip.last_access, db_ip.delay)
+            response = requests.get(sm[0])
+            update_ip_time(db_ip.id)
+            sm_data = response.text.strip()
         print("sm str:", sm_data)
 
-        # add/update time of request for this IP
-        if db_ip is None:
-            ip_data = {'ip_addr': site_ip,
-                       'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                       'delay': delay}
-            db_ip = ip.create(ip_data)
-        else:
-            db_ip = update_ip_time(db_ip.id)
         print("IP:", db_ip)
 
         # insert domain into DB
