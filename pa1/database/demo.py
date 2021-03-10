@@ -32,3 +32,6 @@ page_table.list()
 
 # update values kjer filters
 site.update(values={'domain': 'update.to.this'}, filters={'id': test_site_id})
+
+# left join demo -> to naredi left join med page table in site po page.site_id=site.id
+page_table.join('site', kind='LEFT', on={'site_id': 'id'})
