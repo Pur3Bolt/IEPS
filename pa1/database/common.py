@@ -37,3 +37,13 @@ class GenericTable(SQLExecutor):
         return self._update(table=self.table,
                             values=kwargs.pop('values', None) or args[0],
                             filters=kwargs.pop('filters', None) or args[1])
+
+    def join(self, *args, **kwargs):
+        return self._join(table_1=self.table,
+                          table_2=args[0],
+                          kind=kwargs.pop('kind', None) or args[0],
+                          on=kwargs.pop('on', None) or args[1],
+                          filters=kwargs.pop('filters', None),
+                          fields=kwargs.pop('fields', '*'),
+                          fetch_all=kwargs.pop('fetch_all', True),
+                          order_by=kwargs.pop('order_by', None))
