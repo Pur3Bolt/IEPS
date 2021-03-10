@@ -17,6 +17,7 @@ class Database:
         self.DSN = "dbname='%s' user='%s' host='%s' password='%s'" \
                    % (self.dbname, self.username, self.host, self.password)
 
+        self.cursor_factory = extras.RealDictCursor
         self.connection, self.cursor = None, None
 
         if autoconnect:
@@ -45,7 +46,7 @@ class Database:
             conn = self.get_connection()
         if self.cursor and not self.cursor.closed:
             return self.cursor
-        self.cursor = conn.cursor(cursor_factory=extras.NamedTupleCursor)
+        self.cursor = conn.cursor(cursor_factory=self.cursor_factory)
         return self.cursor
 
     @contextmanager
