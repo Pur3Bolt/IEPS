@@ -63,7 +63,7 @@ class SQLExecutor(Database):
                 return cursor.fetchone()
 
     def _update(self, table, values, filters):
-        _u = 'UPDATE {0}.{1} SET {2} WHERE {3} RETURNING *'.format(
+        _u = 'UPDATE {0}.{1} SET ({2}) WHERE {3} RETURNING *'.format(
             self.schema,
             table,
             ','.join(["{0}='{1}'".format(k, v) for k, v in values.items()]),
