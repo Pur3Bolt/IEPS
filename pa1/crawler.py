@@ -412,8 +412,7 @@ USER_AGENT = "fri-wier-agmsak"
 
 
 processing_page = page.get(page_type_code='FRONTIER') #Vrne prvega v tabeli
-print(processing_page)
-print(processing_page.get("url"))
+
 counter = 0
 while processing_page is not None and counter < 10:
     processing_page = page.update(values={'page_type_code': "PROCESSING"}, filters={'id': processing_page.get("id")}) #Update statusa v PROCESSING
@@ -460,9 +459,7 @@ while processing_page is not None and counter < 10:
 
     #  update request time for this IP in DB
     update_ip_time(db_ip.get('id'))
-    print(WEB_PAGE_ADDRESS)
-    print(is_html)
-    print(status_code)
+
     if is_html:
         html = driver.page_source
         hashed_html = hash_function(html)
@@ -507,16 +504,11 @@ while processing_page is not None and counter < 10:
                 print(e)
 
 
-
-
-
-
     # TODO store found blob(s) to DB
     else:
         try:
             file_type = mimetypes.guess_extension(content_type) #docx, pdf
             file_name = WEB_PAGE_ADDRESS.rsplit('/', 1)[1] + file_type #filename with its extension
-            # Q2: Should we write into page_data table? and show this as an file in the original page?
             processing_page = page.update(values={'html_hash': None,
                                                   'page_type_code': "BINARY",
                                                   'http_status_code': status_code,
