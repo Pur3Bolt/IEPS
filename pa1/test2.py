@@ -49,6 +49,7 @@ for u in seznam:
         urls.append(a)
 
 
+print("CIGAN"[1:])
 
 print(URL_TEST_5)
 

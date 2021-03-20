@@ -268,6 +268,7 @@ def add_to_frontier(rp, site_db, url, disallow):
                             'data_type_code': url.rsplit('/', 1)[1].split('.')[1].upper(),
                             'data': None}
             new_page_data = pagedata.create(page_data_insert)
+            create_link(current_page_id, new_page.get("id"))
             print("Page:", new_page)
             return new_page
         except Exception as e:
@@ -351,20 +352,31 @@ def create_disallow_list(site_db):
             disallow.append(spliting[1].replace('/', '').replace('*', '.*').replace('?', "\\?"))
     return disallow
 
-def insert_image(page_id, filename):
-    image_to_insert = {'page_id': page_id,
-                        'filename': filename,
-                        'content_type': filename.rsplit('.', 1)[1],
-                        'data': None,
-                        'accessed_time': None
-                        }
-    try:
-        created_image = image.create(image_to_insert)
-        print("Image:", created_image)
-        return created_image
-    except Exception as e:
-        # probably a duplicate image in DB for page
-        print(e)
+def insert_image(page_id, filename, rp, site_db, url, disallow):
+    url_exsist_in_db = page.get(url=url)
+    if url_exsist_in_db is None:
+        page_insert_data = {'site_id': site_db.get("id"),
+                            'page_type_code': 'BINARY',
+                            'url': url}
+        try:
+            new_page = page.create(page_insert_data)
+            create_link(current_page_id, new_page.get("id"))
+            print("Image:", new_page)
+            image_to_insert = {'page_id': new_page.get("id"),
+                               'filename': filename,
+                               'content_type': filename.rsplit('.', 1)[1],
+                               'data': None,
+                               'accessed_time': None
+                               }
+            created_image = image.create(image_to_insert)
+            print("Image:", created_image)
+        except Exception as e:
+            # probably a duplicate URL in DB
+            print(e)
+    else:
+        create_link(current_page_id, url_exsist_in_db.get("id"))
+
+
 
 def parse_urls_from_javascript_onclick(links):
     seznam = []
@@ -403,7 +415,7 @@ processing_page = page.get(page_type_code='FRONTIER') #Vrne prvega v tabeli
 print(processing_page)
 print(processing_page.get("url"))
 counter = 0
-while processing_page is not None or counter > 10:
+while processing_page is not None and counter < 10:
     processing_page = page.update(values={'page_type_code': "PROCESSING"}, filters={'id': processing_page.get("id")}) #Update statusa v PROCESSING
     current_page_id = processing_page.get("id")
     WEB_PAGE_ADDRESS = processing_page.get("url") #Dobim url prvega
@@ -480,17 +492,19 @@ while processing_page is not None or counter > 10:
             for s in srcs:
                 src = s.get_attribute("src")
                 if 'gov.si' in urlparse(src).netloc:
-                    insert_image(current_page_id, src.rsplit('/', 1)[1])
+                    insert_image(current_page_id, src.rsplit('/', 1)[1], rp, site_db, s.get_attribute("src"), disallow)
 
         else:
-            # Oznacim da je duplikat
-            processing_page = page.update(values={ 'html_hash': hashed_html,
+            # Updating Duplicate
+            try:
+                processing_page = page.update(values={ 'html_hash': hashed_html,
                                                    'page_type_code': "DUPLICATE",
                                                    'http_status_code': status_code,
                                                    'accessed_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                                   'html_content': html
+                                                   'html_content': None
                                                    }, filters={'id': processing_page.get("id")})
-            # create_link(page_exsist.get("id"), processing_page.get("id")) Nerabim delat linka ker gre za duplikat?
+            except Exception as e:
+                print(e)
 
 
 
@@ -499,15 +513,38 @@ while processing_page is not None or counter > 10:
 
     # TODO store found blob(s) to DB
     else:
-        file_type = mimetypes.guess_extension("text/html") #docx, pdf
-        file_name = WEB_PAGE_ADDRESS.rsplit('/', 1)[1] + file_type #filename with its extension
-        # Q2: Should we write into page_data table? and show this as an file in the original page?
-        processing_page = page.update(values={'html_hash': None,
-                                              'page_type_code': "BINARY",
-                                              'http_status_code': status_code,
-                                              'accessed_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                              'html_content': None
-                                              }, filters={'id': processing_page.get("id")})
+        try:
+            file_type = mimetypes.guess_extension(content_type) #docx, pdf
+            file_name = WEB_PAGE_ADDRESS.rsplit('/', 1)[1] + file_type #filename with its extension
+            # Q2: Should we write into page_data table? and show this as an file in the original page?
+            processing_page = page.update(values={'html_hash': None,
+                                                  'page_type_code': "BINARY",
+                                                  'http_status_code': status_code,
+                                                  'accessed_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                  'html_content': None
+                                                  }, filters={'id': processing_page.get("id")})
+
+            if file_type[1:].upper() in ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ', 'AI', 'PSD']:
+                image_to_insert = {'page_id': processing_page.get("id"),
+                                   'filename': file_name,
+                                   'content_type': file_type[1:],
+                                   'data': None,
+                                   'accessed_time': None
+                                   }
+                created_image = image.create(image_to_insert)
+            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'OTHER']:
+                page_data_insert = {'page_id': processing_page.get("id"),
+                                'data_type_code': WEB_PAGE_ADDRESS.rsplit('/', 1)[1].split('.')[1].upper(),
+                                'data': None}
+                new_page_data = pagedata.create(page_data_insert)
+            else:
+                page_data_insert = {'page_id': processing_page.get("id"),
+                                'data_type_code': 'OTHER',
+                                'data': None}
+                new_page_data = pagedata.create(page_data_insert)
+        except Exception as e:
+            print(e)
+
     driver.close()
     counter+=1
     processing_page = page.get(page_type_code='FRONTIER')  # Vrne prvega v tabeli
