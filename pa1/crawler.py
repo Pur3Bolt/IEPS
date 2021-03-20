@@ -462,7 +462,7 @@ while processing_page is not None and counter < 10:
         html = driver.page_source
         hashed_html = hash_function(html)
         page_exsist = exsist_duplicate(hashed_html)
-        if (page_exsist is None):
+        if page_exsist is None:
             processing_page = page.update(values={ 'html_hash': hashed_html,
                                                    'page_type_code': "HTML",
                                                    'http_status_code': status_code,

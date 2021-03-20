@@ -13,7 +13,10 @@ number_of_threads = vars(args).get('threads', 5)
 crawlers = []
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=number_of_threads) as executor:
+    # executor.shutdown(wait=False)
     for idx in range(number_of_threads):
-        crawler = Crawler(idx)
+        crawler = Crawler()
         crawlers.append(crawler)
         executor.submit(crawler.process)
+
+
