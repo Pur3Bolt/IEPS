@@ -14,6 +14,7 @@ import urlcanon
 import hashlib
 import re
 from urllib.parse import urljoin
+import mimetypes
 import pathlib
 
 
@@ -437,15 +438,14 @@ while processing_page is not None or counter > 10:
     sleep(TIMEOUT)
     status_code = 200
     is_html = False
+    content_type = 'text/html'
     # TODO POGLEDAM CE JE HTML/TEXT
     for request in driver.requests:
         if request.response and request.url == driver.current_url:
-            print(request.url)
-            print(WEB_PAGE_ADDRESS)
-            print(request.response)
-            print("a tole sploh dela?")
             status_code = request.response.status_code
-            is_html = 'text/html' in str(request.response.headers['Content-Type'])
+            is_html = 'text/html' in request.response.headers['Content-Type']
+            content_type = request.response.headers['Content-Type']
+
     #  update request time for this IP in DB
     update_ip_time(db_ip.get('id'))
     print(WEB_PAGE_ADDRESS)
@@ -499,7 +499,9 @@ while processing_page is not None or counter > 10:
 
     # TODO store found blob(s) to DB
     else:
-        #Todo Pogledam kaksn file je
+        file_type = mimetypes.guess_extension("text/html") #docx, pdf
+        file_name = WEB_PAGE_ADDRESS.rsplit('/', 1)[1] + file_type #filename with its extension
+        # Q2: Should we write into page_data table? and show this as an file in the original page?
         processing_page = page.update(values={'html_hash': None,
                                               'page_type_code': "BINARY",
                                               'http_status_code': status_code,
