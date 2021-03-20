@@ -7,11 +7,13 @@ from datetime import datetime
 from time import sleep
 import database.tables as tables
 import requests
-from selenium import webdriver
+#from selenium import webdriver
+from seleniumwire import webdriver  # Import from seleniumwire
 from selenium.webdriver.chrome.options import Options
 import urlcanon
 import hashlib
 import re
+from urllib.parse import urljoin
 import pathlib
 
 
@@ -239,21 +241,17 @@ def add_to_frontier(rp, site_db, url, disallow):
             None if the URL is not allowed to be added to the frontier
             Record of the newly inserted row into DB otherwise
         """
-    # TODO relative URLs must be valid;
 
-
-    #TODO - DONE  URLs must be canonicalised and cleaned
     url = url_to_canon(url)
-
     if not uri_validator(url):
         print("Not a URL.")
         return None
-    if not rp.can_fetch(USER_AGENT, url): #TODO BY MATEVZ
+    if not rp.can_fetch(USER_AGENT, url):
         print("Not allowed to crawl this URL.")
         return None
-    #if is_disallowed(disallow, url): #TODO BY MATEVZ
-       # print("Not allowed to crawl this URL.")
-        #return None
+    if is_disallowed(disallow, url):
+        print("Not allowed to crawl this URL.")
+        return None
     if 'gov.si' not in urlparse(url).netloc:
         print("Not gov.si domain")
         return None
@@ -275,25 +273,32 @@ def add_to_frontier(rp, site_db, url, disallow):
             # probably a duplicate URL in DB
             print(e)
     else:
-        page_insert_data = {'site_id': site_db.get("id"),
-                            'page_type_code': 'FRONTIER',
-                            'url': url}
-        try:
-            new_page = page.create(page_insert_data)
-            print("Page:", new_page)
-            return new_page
-        except Exception as e:
-            # probably a duplicate URL in DB
-            print(e)
+        url_exsist_in_db = page.get(url=url)
+        if url_exsist_in_db is None:
+            page_insert_data = {'site_id': site_db.get("id"),
+                                'page_type_code': 'FRONTIER',
+                                'url': url}
+            try:
+                new_page = page.create(page_insert_data)
+                create_link(current_page_id, new_page.get("id"))
+                print("Page:", new_page)
+                return new_page
+            except Exception as e:
+                # probably a duplicate URL in DB
+                print(e)
+        else:
+            create_link(current_page_id, url_exsist_in_db.get("id"))
 
-def is_disallowed(disallow, url):
-    for dis in disallow:
-        if '*' in dis:
-            if '/' in dis:
-                dis = dis.replace('/', '')
-            if re.sub('[*]', '', dis) in url:
-                return True
-    return False;
+
+def create_link(from_id, to_id):
+    try:
+        link_to_insert = {'from_page': from_id,
+                          'to_page': to_id
+                          }
+        created_link = link.create(link_to_insert)
+    except Exception as e:
+        # Already exsist in DB
+        print(e)
 
 def url_to_canon(url):
     parsed_url = urlcanon.parse_url(url)
@@ -330,6 +335,20 @@ def create_disallow_list(site_db):
             disallow.append(spliting[1])
     return disallow
 
+def is_disallowed(disallow, url):
+    for dis in disallow:
+        if re.match(dis, url) is not None:
+            return True, dis
+    return False
+
+
+def create_disallow_list(site_db):
+    disallow = []
+    for line in str(site_db).split("\n"):
+        spliting = line.split(" ")
+        if spliting[0].lower() == 'disallow:' and '*' in spliting[1]:
+            disallow.append(spliting[1].replace('/', '').replace('*', '.*').replace('?', "\\?"))
+    return disallow
 
 def insert_image(page_id, filename):
     image_to_insert = {'page_id': page_id,
@@ -345,6 +364,27 @@ def insert_image(page_id, filename):
     except Exception as e:
         # probably a duplicate image in DB for page
         print(e)
+
+def parse_urls_from_javascript_onclick(links):
+    seznam = []
+    urls = []
+    for url in links:
+        if 'location.href' in url.get_attribute("onclick"):
+            string = url.get_attribute("onclick")
+            string = string.split('location.href=')[1].replace("'", '').replace('"', '')
+            seznam.append(string)
+        if 'document.location' in url.get_attribute("onclick"):
+            string = url.get_attribute("onclick")
+            string = string.split('document.location=')[1].replace("'", '').replace('"', '')
+            seznam.append(string)
+    for u in seznam:
+        print("Working with: " + u)
+        if 'http://' in u or 'https://' in u:
+            urls.append(u)
+        else:
+            a = urljoin(URL_TEST_2, u)
+            urls.append(a)
+    return urls
 
 
 # TODO remove test data
@@ -364,7 +404,7 @@ print(processing_page.get("url"))
 counter = 0
 while processing_page is not None or counter > 10:
     processing_page = page.update(values={'page_type_code': "PROCESSING"}, filters={'id': processing_page.get("id")}) #Update statusa v PROCESSING
-
+    current_page_id = processing_page.get("id")
     WEB_PAGE_ADDRESS = processing_page.get("url") #Dobim url prvega
 
     rp, site_db = init_robot_parser(WEB_PAGE_ADDRESS)  #Parsanje  robot text matevz
@@ -395,49 +435,77 @@ while processing_page is not None or counter > 10:
 
     TIMEOUT = 5
     sleep(TIMEOUT)
-
+    status_code = 200
+    is_html = False
+    # TODO POGLEDAM CE JE HTML/TEXT
+    for request in driver.requests:
+        if request.response and request.url == driver.current_url:
+            print(request.url)
+            print(WEB_PAGE_ADDRESS)
+            print(request.response)
+            print("a tole sploh dela?")
+            status_code = request.response.status_code
+            is_html = 'text/html' in str(request.response.headers['Content-Type'])
     #  update request time for this IP in DB
     update_ip_time(db_ip.get('id'))
+    print(WEB_PAGE_ADDRESS)
+    print(is_html)
+    print(status_code)
+    if is_html:
+        html = driver.page_source
+        hashed_html = hash_function(html)
+        page_exsist = exsist_duplicate(hashed_html)
+        if (page_exsist is None):
+            processing_page = page.update(values={ 'html_hash': hashed_html,
+                                                   'page_type_code': "HTML",
+                                                   'http_status_code': status_code,
+                                                   'accessed_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                   'html_content': html
+                                                   }, filters={'id': processing_page.get("id")})
 
-    # Do tle nisn nic spreminjov del od Matevza
-    # TODO detect duplicate website here --DONE
-    html = driver.page_source
-    hashed_html = hash_function(html)
-    page_exsist = exsist_duplicate(hashed_html)
-    if (page_exsist is None):
-        #print(html)
-        #page.update(values={'html_content': html},
-        #           filters={'id': processing_page.get("id")})
-        processing_page = page.update(values={ 'html_hash': hashed_html,'page_type_code': "HTML", 'accessed_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, filters={'id': processing_page.get("id")})
-    else:
-        # TODO USTVARITI POTREBNO LINK
-        page.update(values={'page_type_code': "DUPLICATE"}, filters={'id': processing_page.get("id")})
-        link_to_insert = {'from_page': page_exsist.get("id"),
-                           'to_page': processing_page.get("id")
-                           }
+            # Checking all URLS for a HREF TAG
+            elems = driver.find_elements_by_xpath("//a[@href]")
+            for e in elems:
+                add_to_frontier(rp, site_db, e.get_attribute("href"), disallow)
 
-        created_link = link.create(link_to_insert)
+            # # Checking all URLS for a javascript document.href, location.href
+            jelems = parse_urls_from_javascript_onclick(driver.find_elements_by_xpath("//*[@onclick]"))
+            for e in jelems:
+                add_to_frontier(rp, site_db, e.get_attribute("href"), disallow)
 
-    #DUPLIKAT DO TLE
 
-    # TODO detect if website is HTML/text/... and save all found URLs to frontier
-    elems = driver.find_elements_by_xpath("//a[@href]")
-    for e in elems:
-        add_to_frontier(rp, site_db, e.get_attribute("href"), disallow)
 
-    # TODO Check Javascript links
+            # Storing images to DB
+            srcs = driver.find_elements_by_xpath("//img[@src]")
+            for s in srcs:
+                src = s.get_attribute("src")
+                if 'gov.si' in urlparse(src).netloc:
+                    insert_image(current_page_id, src.rsplit('/', 1)[1])
 
-    # DONE ADDING IMAGES TO TABLES
-    current_page_id = processing_page.get("id")
-    # Storing images to DB
-    srcs = driver.find_elements_by_xpath("//img[@src]")
-    for s in srcs:
-        src = s.get_attribute("src")
-        if 'gov.si' in urlparse(src).netloc:
-            insert_image(current_page_id, src.rsplit('/', 1)[1])
+        else:
+            # Oznacim da je duplikat
+            processing_page = page.update(values={ 'html_hash': hashed_html,
+                                                   'page_type_code': "DUPLICATE",
+                                                   'http_status_code': status_code,
+                                                   'accessed_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                   'html_content': html
+                                                   }, filters={'id': processing_page.get("id")})
+            # create_link(page_exsist.get("id"), processing_page.get("id")) Nerabim delat linka ker gre za duplikat?
+
+
+
+
+
 
     # TODO store found blob(s) to DB
-
+    else:
+        #Todo Pogledam kaksn file je
+        processing_page = page.update(values={'html_hash': None,
+                                              'page_type_code': "BINARY",
+                                              'http_status_code': status_code,
+                                              'accessed_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                              'html_content': None
+                                              }, filters={'id': processing_page.get("id")})
     driver.close()
     counter+=1
     processing_page = page.get(page_type_code='FRONTIER')  # Vrne prvega v tabeli

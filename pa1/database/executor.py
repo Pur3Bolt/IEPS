@@ -1,4 +1,5 @@
 from .connector import Database
+from .parser import prepare
 from psycopg2 import extras
 
 
@@ -47,7 +48,7 @@ class SQLExecutor(Database):
             ','.join(fields),
             self.schema,
             table,
-            ','.join(["{0}='{1}'".format(k, v) for k, v in data.items()]),
+            ','.join(["{0}={1}".format(k, v) for k, v in prepare(data).items()]),
             ','.join(order_by))
 
         if self.DEBUG:
@@ -66,8 +67,8 @@ class SQLExecutor(Database):
         _u = 'UPDATE {0}.{1} SET {2} WHERE {3} RETURNING *'.format(
             self.schema,
             table,
-            ','.join(["{0}='{1}'".format(k, v) for k, v in values.items()]),
-            ','.join(["{0}='{1}'".format(k, v) for k, v in filters.items()]))
+            ','.join(["{0}={1}".format(k, v) for k, v in prepare(values).items()]),
+            ','.join(["{0}={1}".format(k, v) for k, v in prepare(filters).items()]))
 
         if self.DEBUG:
             print("update - ", _u)
@@ -86,7 +87,7 @@ class SQLExecutor(Database):
             table_2,
             kind.upper(),
             ','.join(["t1.{0}=t2.{1}".format(k, v) for k, v in on.items()]),
-            'WHERE '+','.join(["{0}='{1}'".format(k, v) for k, v in filters.items()]) if filters else "",
+            'WHERE '+','.join(["{0}={1}".format(k, v) for k, v in prepare(filters).items()]) if filters else "",
             'ORDER BY '+','.join(list(map(lambda x: "-{0}.{1}".format(x.replace('-', ''), table_1)
                                           if '-' in x
                                           else "{0}.{1}".format(x, table_1), order_by))) if order_by else ""

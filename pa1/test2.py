@@ -30,6 +30,7 @@ a = datatype.list2()
 print(a)
 links = driver.find_elements_by_xpath("//*[@onclick]")
 seznam = []
+urls = []
 for url in links:
     if 'location.href' in url.get_attribute("onclick"):
         string = url.get_attribute("onclick")
@@ -42,10 +43,11 @@ for url in links:
 for u in seznam:
     print("Working with: " + u)
     if 'http://' in u or 'https://' in u:
-        print(u)
+        urls.append(u)
     else:
         a = urljoin(URL_TEST_2, u)
-        print(a)
+        urls.append(a)
+
 
 
 print(URL_TEST_5)
