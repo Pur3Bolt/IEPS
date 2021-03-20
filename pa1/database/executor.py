@@ -1,6 +1,7 @@
 from .connector import Database
 from .parser import prepare
 from psycopg2 import extras
+from threading import Lock
 
 
 class SQLExecutor(Database):

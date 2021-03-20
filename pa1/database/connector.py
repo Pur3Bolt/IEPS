@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from psycopg2 import connect, extras
+from threading import Lock
 
 
 class Database:
@@ -7,6 +8,7 @@ class Database:
         super(Database, self).__init__()
 
         self.DEBUG = False
+        self.lock = Lock()
 
         self.username = 'ieps'
         self.password = 'ieps123ieps!'
@@ -52,15 +54,18 @@ class Database:
     @contextmanager
     def transaction(self):
         con, cur = None, None
-        try:
-            con = self.get_connection()
-            cur = self.get_cursor(con)
-            yield cur
-            con.commit()
-        except Exception as e:
-            if con:
-                con.rollback()
-            raise e
-        finally:
-            if con:
-                con.close()
+        with self.lock:
+            try:
+                con = self.get_connection()
+                cur = self.get_cursor(con)
+                yield cur
+                con.commit()
+            except Exception as e:
+                if con:
+                    con.rollback()
+                raise e
+            finally:
+                if cur:
+                    cur.close()
+                if False and con:
+                    con.close()

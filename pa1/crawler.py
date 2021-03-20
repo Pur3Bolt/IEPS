@@ -376,8 +376,6 @@ def insert_image(page_id, filename, rp, site_db, url, disallow):
     else:
         create_link(current_page_id, url_exsist_in_db.get("id"))
 
-
-
 def parse_urls_from_javascript_onclick(links):
     seznam = []
     urls = []
