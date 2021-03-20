@@ -30,7 +30,7 @@ for request in driver.requests:
         is_html = 'text/html' in str(request.response.headers['Content-Type'])
         print(mimetypes.guess_extension(request.response.headers['Content-Type']))
         print(request.response.headers)
-
+        print(request.headers)
 print(status_code)
 print(is_html)
 

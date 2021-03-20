@@ -140,6 +140,7 @@ class Crawler:
             return None
 
         data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'OTHER']
+        image_type = ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ', 'AI','PSD']
         if '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in data_type:
             page_insert_data = {'site_id': site_db.get("id"),
                                 'page_type_code': 'BINARY',
@@ -150,6 +151,23 @@ class Crawler:
                                     'data_type_code': url.rsplit('/', 1)[1].split('.')[1].upper(),
                                     'data': None}
                 self.pagedata_table.create(page_data_insert)
+                self.create_link(self.current_page_id, new_page.get("id"))
+                return new_page
+            except Exception as e:
+                print(e)
+        elif '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in image_type:
+            page_insert_data = {'site_id': site_db.get("id"),
+                                'page_type_code': 'BINARY',
+                                'url': url}
+            try:
+                new_page = self.page_table.create(page_insert_data)
+                image_to_insert = {'page_id': new_page.get("id"),
+                                   'filename': url.rsplit('/', 1)[1].split('.')[0],
+                                   'content_type': url.rsplit('/', 1)[1].split('.')[1].upper(),
+                                   'data': None,
+                                   'accessed_time': None
+                                   }
+                created_image = self.image_table.create(image_to_insert)
                 self.create_link(self.current_page_id, new_page.get("id"))
                 return new_page
             except Exception as e:
@@ -258,7 +276,10 @@ class Crawler:
     def process(self):
         try:
             self.processing_page = self.page_table.get(page_type_code='FRONTIER')
-            print(self.processing_page)
+            while self.processing_page is None: #Dodano ce slucajn ni v frontierju nic
+                sleep(60) #sleep 1 min
+                self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+
             while self.processing_page:
                 self.processing_page = self.page_table.update(values={'page_type_code': "PROCESSING"},
                                                               filters={'id': self.processing_page.get("id")})
@@ -293,7 +314,7 @@ class Crawler:
                 sleep(self.wait_for) #Loading website
                 status_code, is_html, content_type = 200, False, 'text/html'
                 for request in self.driver.requests:
-                    if request.response and request.url == self.driver.current_url:
+                    if request.response and request.url == self.url_to_canon(self.driver.current_url):
                         status_code = request.response.status_code
                         is_html = 'text/html' in request.response.headers['Content-Type']
                         content_type = request.response.headers['Content-Type']
