@@ -18,11 +18,14 @@ import database.tables as tables
 
 
 class Crawler:
-    def __init__(self):
+    def __init__(self, frontier_lock, access_time_lock):
         self.USER_AGENT = "fri-wier-agmsak"
-        self.WEB_DRIVER_LOCATION = "C:\\Users\\Andrej\\Downloads\\chromedriver_win32org\\chromedriver"
+        self.WEB_DRIVER_LOCATION = ".\\chromedriver"
         self.wait_for = 5
-        self.delay = 10
+        self.delay = 6
+        self.frontier_lock = frontier_lock
+        self.access_time_lock = access_time_lock
+        self.DEBUG = True
 
         self.site_table = tables.SiteTable()
         self.page_table = tables.PageTable()
@@ -47,8 +50,11 @@ class Crawler:
     def get_base_url(self, url):
         return urlparse(url).scheme + "://" + urlparse(url).netloc
 
-    def update_ip_time(self, site_id):
-        return self.ip_table.update(values={'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S')},
+    def update_ip_time(self, site_id, pre_set_time=None):
+        if pre_set_time is None:
+            return self.ip_table.update(values={'last_access': datetime.now().strftime('%Y-%m-%d %H:%M:%S')},
+                                    filters={'id': site_id})
+        return self.ip_table.update(values={'last_access': pre_set_time.strftime('%Y-%m-%d %H:%M:%S')},
                                     filters={'id': site_id})
 
     def init_robot_parser(self, url):
@@ -64,6 +70,10 @@ class Crawler:
 
             # make the robots.txt request
             response = requests.get(self.get_base_url(url) + "/robots.txt")
+            robots_text = ""
+            if response.status_code == 200:
+                robots_text = response.text.strip()
+                self.parse_robots_data(rp, robots_text)
             # add/update time of request for this IP
             if db_ip is None:
                 ip_data = {'ip_addr': site_ip,
@@ -72,10 +82,6 @@ class Crawler:
                 db_ip = self.ip_table.create(ip_data)
             else:
                 self.update_ip_time(db_ip.get('id', None))
-            robots_text = ""
-            if response.status_code == 200:
-                robots_text = response.text.strip()
-                self.parse_robots_data(rp, robots_text)
 
             sm = rp.site_maps()  # get Sitemap param as list
             sm_data = ""
@@ -108,7 +114,7 @@ class Crawler:
             if rrate:
                 delay = ceil(rrate.seconds / rrate.requests)
             else:
-                delay = 5  # if no param was set, delay will be 5 sec
+                delay = 6  # if no param was set, delay will be 5 sec
         return delay
 
     def sleep_untill_allowed_request(self, time_old, delay):
@@ -127,20 +133,24 @@ class Crawler:
     def add_to_frontier(self, rp, site_db, url, disallow):
         url = self.url_to_canon(url)
         if not self.uri_validator(url):
-            print("Not a URL.")
+            if self.DEBUG:
+                print("Not a URL:", url)
             return None
         if not rp.can_fetch(self.USER_AGENT, url):
-            print("Not allowed to crawl this URL.")
+            if self.DEBUG:
+                print("RP not allowed to crawl this URL:", url)
             return None
         if self.is_disallowed(disallow, url):
-            print("Not allowed to crawl this URL.")
+            if self.DEBUG:
+                print("Disallowed to crawl this URL:", url)
             return None
         if 'gov.si' not in urlparse(url).netloc:
-            print("Not gov.si domain")
+            if self.DEBUG:
+                print("Not gov.si domain:", url)
             return None
 
         data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'OTHER']
-        image_type = ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ', 'AI','PSD']
+        image_type = ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ', 'AI', 'PSD']
         if '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in data_type:
             page_insert_data = {'site_id': site_db.get("id"),
                                 'page_type_code': 'BINARY',
@@ -154,7 +164,8 @@ class Crawler:
                 self.create_link(self.current_page_id, new_page.get("id"))
                 return new_page
             except Exception as e:
-                print(e)
+                if self.DEBUG:
+                    print(e)
         elif '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in image_type:
             page_insert_data = {'site_id': site_db.get("id"),
                                 'page_type_code': 'BINARY',
@@ -171,7 +182,8 @@ class Crawler:
                 self.create_link(self.current_page_id, new_page.get("id"))
                 return new_page
             except Exception as e:
-                print(e)
+                if self.DEBUG:
+                    print(e)
         else:
             url_exsist_in_db = self.page_table.get(url=url)
             if url_exsist_in_db is None:
@@ -184,9 +196,11 @@ class Crawler:
                     return new_page
                 except Exception as e:
                     # probably a duplicate URL in DB
-                    print(e)
+                    if self.DEBUG:
+                        print(e)
             else:
                 self.create_link(self.current_page_id, url_exsist_in_db.get("id"))
+
     def create_link(self, from_id, to_id):
         try:
             link_to_insert = {'from_page': from_id, 'to_page': to_id}
@@ -226,7 +240,7 @@ class Crawler:
 
     def create_disallow_list(self, site_db):
         disallow = []
-        for line in str(site_db).split("\n"):
+        for line in str(site_db).replace("\r", "").split("\n"):
             spliting = line.split(" ")
             if spliting[0].lower() == 'disallow:' and '*' in spliting[1]:
                 disallow.append(spliting[1].replace('/', '').replace('*', '.*').replace('?', "\\?"))
@@ -243,7 +257,7 @@ class Crawler:
                 self.create_link(self.current_page_id, new_page.get("id"))
                 image_to_insert = {'page_id': new_page.get("id"),
                                    'filename': filename,
-                                   'content_type': filename.rsplit('.', 1)[1],
+                                   'content_type': filename.rsplit('.', 1)[1].upper(),
                                    'data': None,
                                    'accessed_time': None
                                    }
@@ -273,45 +287,87 @@ class Crawler:
                 urls.append(a)
         return urls
 
+    def get_next_url(self):
+        with self.frontier_lock:
+            self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+            if self.processing_page is None:  # Dodano ce slucajn ni v frontierju nic
+                return False
+            self.processing_page = self.page_table.update(values={'page_type_code': "PROCESSING"},
+                                                          filters={'id': self.processing_page.get("id")})
+
     def process(self):
         try:
-            self.processing_page = self.page_table.get(page_type_code='FRONTIER')
-            while self.processing_page is None: #Dodano ce slucajn ni v frontierju nic
-                sleep(60) #sleep 1 min
-                self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+            # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+            # while self.processing_page is None:  # Dodano ce slucajn ni v frontierju nic
+            #     sleep(20)  # sleep 20s
+            #     self.processing_page = self.page_table.get(page_type_code='FRONTIER')
 
-            while self.processing_page:
-                self.processing_page = self.page_table.update(values={'page_type_code': "PROCESSING"},
-                                                              filters={'id': self.processing_page.get("id")})
+            # while self.processing_page:
+            while True:
+                # self.processing_page = self.page_table.update(values={'page_type_code': "PROCESSING"},
+                #                                               filters={'id': self.processing_page.get("id")})
+                # get the next URL from Frontier or sleep
+                self.get_next_url()
+                while self.processing_page is None:
+                    print('Sleep 20s')
+                    sleep(20)
+                    self.get_next_url()
+                if self.DEBUG:
+                    print(self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'))
+
                 self.current_page_id = self.processing_page.get("id")
                 self.current_url = self.processing_page.get("url")
                 try:
+                    # initialise the parser for robots.txt
                     rp, site_db = self.init_robot_parser(self.current_url)
+                    if self.processing_page.get('site_id') is None:
+                        self.processing_page = self.page_table.update(values={'site_id': site_db.get('id')},
+                                                                      filters={'id': self.processing_page.get("id")})
                     disallow = self.create_disallow_list(site_db.get("robots_content"))
 
                     site_ip = gethostbyname(urlparse(self.current_url).netloc)
-                except Exception as e:
+                except:
                     self.processing_page = self.page_table.update(values={'page_type_code': "TRASH"},
                                                                   filters={'id': self.current_page_id})
-                    self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+                    # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
                     continue
 
-                #db_ip = self.ip_table.get(ip_addr=site_ip)
-                #print(db_ip)
-                #self.sleep_untill_allowed_request(db_ip.get('last_access'), self.delay) #Sleeping thread
-                #print(self.delay)
-                while True:
-                    db_ip = self.ip_table.get(ip_addr=site_ip)
-                    difference = datetime.now() - db_ip.get('last_access')
-                    sleep_time = self.delay - difference.total_seconds()
-                    if sleep_time <= 0:
-                        self.update_ip_time(db_ip.get('id'))
-                        break
-                    else:
-                        sleep(1)
+                # db_ip = self.ip_table.get(ip_addr=site_ip)
+                # self.sleep_untill_allowed_request(db_ip.get('last_access'), self.delay) #Sleeping thread
+                # self.update_ip_time(db_ip.get('id'))
+
+                with self.access_time_lock:
+                    if self.DEBUG:
+                        print('IN:lock ', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'))
+                    while True:
+                        db_ip = self.ip_table.get(ip_addr=site_ip)
+                        difference = datetime.now() - db_ip.get('last_access')
+                        sleep_time = self.delay - difference.total_seconds()
+                        if sleep_time <= 0:
+                            self.update_ip_time(db_ip.get('id'))
+                            break
+                        else:
+                            sleep(1)
+                    if self.DEBUG:
+                        print('OUT:lock', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'))
+
+                # code to check access time, update it immediately in DB, sleep outside the lock
+                #with self.access_time_lock:
+                #    print('IN:lock ', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'))
+                #    db_ip = self.ip_table.get(ip_addr=site_ip)
+                #    difference = datetime.now() - db_ip.get('last_access')
+                #    sleep_time = self.delay - ceil(difference.total_seconds())
+                #    if sleep_time <= 0:
+                #        self.update_ip_time(db_ip.get('id'))
+                #    else:
+                #        self.update_ip_time(db_ip.get('id'),
+                #                            pre_set_time=datetime.now() + timedelta(seconds=sleep_time))
+                #    print('OUT:lock', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'), sleep_time)
+                #if sleep_time > 0:
+                #    sleep(sleep_time)
 
                 self.driver.get(self.current_url)
-                sleep(self.wait_for) #Loading website
+                sleep(self.wait_for)  # Loading website
                 status_code, is_html, content_type = 200, False, 'text/html'
                 for request in self.driver.requests:
                     if request.response and request.url == self.url_to_canon(self.driver.current_url):
@@ -322,9 +378,10 @@ class Crawler:
 
                 #  update request time for this IP in DB
                 if status_code != 200:
-                    self.processing_page = self.page_table.update(values={'page_type_code': "TRASH"},
+                    self.processing_page = self.page_table.update(values={'page_type_code': "TRASH",
+                                                                          'status_code': status_code},
                                                                   filters={'id': self.current_page_id})
-                    self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+                    # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
                     continue
 
                 if is_html:
@@ -345,8 +402,9 @@ class Crawler:
                         for e in elems:
                             self.add_to_frontier(rp, site_db, e.get_attribute("href"), disallow)
 
-                        # # Checking all URLS for a javascript document.href, location.href
-                        jelems = self.parse_urls_from_javascript_onclick(self.driver.find_elements_by_xpath("//*[@onclick]"))
+                        # Checking all URLS for a javascript document.href, location.href
+                        jelems = self.parse_urls_from_javascript_onclick(
+                            self.driver.find_elements_by_xpath("//*[@onclick]"))
                         for e in jelems:
                             self.add_to_frontier(rp, site_db, e.get_attribute("href"), disallow)
 
@@ -358,17 +416,16 @@ class Crawler:
                                 self.insert_image(self.current_page_id, src.rsplit('/', 1)[1], rp, site_db,
                                                   s.get_attribute("src"),
                                                   disallow)
-
+                    # duplicated page
                     else:
                         processing_page = self.page_table.update(values={'html_hash': hashed_html,
-                                                                             'page_type_code': "DUPLICATE",
-                                                                             'http_status_code': status_code,
-                                                                             'accessed_time': datetime.now().strftime(
-                                                                                 '%Y-%m-%d %H:%M:%S'),
-                                                                             'html_content': None
-                                                                             }, filters={'id': self.current_page_id})
-
-
+                                                                         'page_type_code': "DUPLICATE",
+                                                                         'http_status_code': status_code,
+                                                                         'accessed_time': datetime.now().strftime(
+                                                                             '%Y-%m-%d %H:%M:%S'),
+                                                                         'html_content': None
+                                                                         }, filters={'id': self.current_page_id})
+                # page type is not HTML
                 else:
                     try:
                         file_type = mimetypes.guess_extension(content_type)  # docx, pdf
@@ -382,8 +439,7 @@ class Crawler:
                                                                          }, filters={'id': self.current_page_id})
 
                         if file_type[1:].upper() in ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ',
-                                                     'AI',
-                                                     'PSD']:
+                                                     'AI', 'PSD']:
                             image_to_insert = {'page_id': self.current_page_id,
                                                'filename': file_name,
                                                'content_type': file_type[1:],
@@ -391,7 +447,7 @@ class Crawler:
                                                'accessed_time': None
                                                }
                             created_image = self.image_table.create(image_to_insert)
-                        elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'OTHER']:
+                        elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC']:
                             page_data_insert = {'page_id': self.current_page_id,
                                                 'data_type_code': self.current_url.rsplit('/', 1)[1].split('.')[
                                                     1].upper(),
@@ -403,12 +459,23 @@ class Crawler:
                                                 'data': None}
                             new_page_data = self.pagedata_table.create(page_data_insert)
                     except Exception as e:
-                        print(e)
+                        if self.DEBUG:
+                            print(e)
 
-                self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+                # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
 
         except Exception as e:
-            print(e)
+            if self.DEBUG:
+                self.processing_page = self.page_table.update(values={'page_type_code': "TRASH",
+                                                                      'html_content': e},
+                                                              filters={'id': self.current_page_id})
+                print(e)
         finally:
+            if self.DEBUG:
+                print("crash, restarting browser")
             self.driver.close()
-
+            options = Options()
+            options.add_argument("--headless")
+            options.add_argument("user-agent=" + self.USER_AGENT)
+            self.driver = webdriver.Chrome(self.WEB_DRIVER_LOCATION, options=options)
+            self.process()
