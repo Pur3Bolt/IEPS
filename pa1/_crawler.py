@@ -25,7 +25,7 @@ class Crawler:
         self.delay = 5
         self.frontier_lock = frontier_lock
         self.access_time_lock = access_time_lock
-        self.DEBUG = True
+        self.DEBUG = False
 
         self.site_table = tables.SiteTable()
         self.page_table = tables.PageTable()
@@ -152,7 +152,7 @@ class Crawler:
                 print("Disallowed to crawl this URL:", url)
             return None
 
-        data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS']
+        data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4']
         image_type = ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ', 'AI', 'PSD']
         if '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in data_type:
             page_insert_data = {'site_id': site_db.get("id"),
@@ -455,7 +455,7 @@ class Crawler:
                                                    'accessed_time': None
                                                    }
                                 created_image = self.image_table.create(image_to_insert)
-                            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS']:
+                            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4']:
                                 page_data_insert = {'page_id': self.current_page_id,
                                                     'data_type_code': self.current_url.rsplit('/', 1)[1].split('.')[
                                                         1].upper(),

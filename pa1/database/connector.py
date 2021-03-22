@@ -10,11 +10,11 @@ class Database:
         self.DEBUG = False
         self.lock = Lock()
 
-        self.username = 'ieps'
-        self.password = 'ieps123ieps!'
-        self.host = '167.86.79.68'
+        self.username = 'user'
+        self.password = 'SecretPassword'
+        self.host = 'localhost'
         self.port = '5432'
-        self.dbname = 'ieps'
+        self.dbname = ''
 
         self.DSN = "dbname='%s' user='%s' host='%s' password='%s'" \
                    % (self.dbname, self.username, self.host, self.password)
