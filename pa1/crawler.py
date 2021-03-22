@@ -256,7 +256,7 @@ def add_to_frontier(rp, site_db, url, disallow):
     if 'gov.si' not in urlparse(url).netloc:
         print("Not gov.si domain")
         return None
-    data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'OTHER']
+    data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP' 'OTHER', 'XLSX', 'ODS', 'CSV']
     # TODO POGLEDAMO CE JE JE SLUCAJN DATOTEKA
     if '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in data_type:
         page_insert_data = {'site_id': site_db.get("id"),
@@ -522,7 +522,7 @@ while processing_page is not None and counter < 10:
                                    'accessed_time': None
                                    }
                 created_image = image.create(image_to_insert)
-            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'OTHER']:
+            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP' 'OTHER', 'XLSX', 'ODS', 'CSV']:
                 page_data_insert = {'page_id': processing_page.get("id"),
                                 'data_type_code': WEB_PAGE_ADDRESS.rsplit('/', 1)[1].split('.')[1].upper(),
                                 'data': None}

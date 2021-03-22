@@ -17,14 +17,14 @@ from seleniumwire import webdriver
 import database.tables as tables
 
 
-class Crawler:
-    def __init__(self, frontier_lock, access_time_lock):
+class Crawler1:
+    def __init__(self, url_to_process):
         self.USER_AGENT = "fri-wier-agmsak"
         self.WEB_DRIVER_LOCATION = "C:\\Users\\Andrej\\Downloads\\chromedriver_win32org\\chromedriver"
         self.wait_for = 5
         self.delay = 6
-        self.frontier_lock = frontier_lock
-        self.access_time_lock = access_time_lock
+        self.frontier_lock = None
+        self.access_time_lock = None
         self.DEBUG = True
 
         self.site_table = tables.SiteTable()
@@ -35,7 +35,7 @@ class Crawler:
         self.pagedata_table = tables.PageDataTable()
 
         self.current_page_id = None
-        self.current_url = None
+        self.current_url = url_to_process
         self.processing_page = None
 
         options = Options()
@@ -296,185 +296,118 @@ class Crawler:
                                                           filters={'id': self.processing_page.get("id")})
 
     def process(self):
-        while True:
-            try:
-                # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
-                # while self.processing_page is None:  # Dodano ce slucajn ni v frontierju nic
-                #     sleep(20)  # sleep 20s
-                #     self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+        try:
+            # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+            # while self.processing_page is None:  # Dodano ce slucajn ni v frontierju nic
+            #     sleep(20)  # sleep 20s
+            #     self.processing_page = self.page_table.get(page_type_code='FRONTIER')
 
-                # while self.processing_page:
-                while True:
-                    # self.processing_page = self.page_table.update(values={'page_type_code': "PROCESSING"},
-                    #                                               filters={'id': self.processing_page.get("id")})
-                    # get the next URL from Frontier or sleep
-                    self.get_next_url()
-                    while self.processing_page is None:
-                        print('Sleep 20s')
-                        sleep(20)
-                        self.get_next_url()
-                    if self.DEBUG:
-                        print(self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'))
+            # while self.processing_page:
+            while True:
+                # self.processing_page = self.page_table.update(values={'page_type_code': "PROCESSING"},
+                #                                               filters={'id': self.processing_page.get("id")})
+                # get the next URL from Frontier or sleep
+                #self.get_next_url()
 
-                    self.current_page_id = self.processing_page.get("id")
-                    self.current_url = self.processing_page.get("url")
-                    try:
-                        # initialise the parser for robots.txt
-                        rp, site_db = self.init_robot_parser(self.current_url)
-                        if self.processing_page.get('site_id') is None:
-                            self.processing_page = self.page_table.update(values={'site_id': site_db.get('id')},
-                                                                          filters={'id': self.processing_page.get("id")})
-                        disallow = self.create_disallow_list(site_db.get("robots_content"))
+                # db_ip = self.ip_table.get(ip_addr=site_ip)
+                # self.sleep_untill_allowed_request(db_ip.get('last_access'), self.delay) #Sleeping thread
+                # self.update_ip_time(db_ip.get('id'))
 
-                        site_ip = gethostbyname(urlparse(self.current_url).netloc)
-                    except:
-                        self.processing_page = self.page_table.update(values={'page_type_code': "TRASH"},
-                                                                      filters={'id': self.current_page_id})
-                        # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
-                        print('E:', e)
-                        continue
+                # code to check access time, update it immediately in DB, sleep outside the lock
+                #with self.access_time_lock:
+                #    print('IN:lock ', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'))
+                #    db_ip = self.ip_table.get(ip_addr=site_ip)
+                #    difference = datetime.now() - db_ip.get('last_access')
+                #    sleep_time = self.delay - ceil(difference.total_seconds())
+                #    if sleep_time <= 0:
+                #        self.update_ip_time(db_ip.get('id'))
+                #    else:
+                #        self.update_ip_time(db_ip.get('id'),
+                #                            pre_set_time=datetime.now() + timedelta(seconds=sleep_time))
+                #    print('OUT:lock', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'), sleep_time)
+                #if sleep_time > 0:
+                #    sleep(sleep_time)
+                print("TEST1")
+                try:
+                    rp, site_db = self.init_robot_parser(self.current_url)
+                    disallow = self.create_disallow_list(site_db.get("robots_content"))
+                except Exception as e:
+                    print('E13:', e)
+                print("TEST2")
 
-                    # db_ip = self.ip_table.get(ip_addr=site_ip)
-                    # self.sleep_untill_allowed_request(db_ip.get('last_access'), self.delay) #Sleeping thread
-                    # self.update_ip_time(db_ip.get('id'))
-
-                    with self.access_time_lock:
-                        if self.DEBUG:
-                            print('IN:lock ', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'))
-                        while True:
-                            db_ip = self.ip_table.get(ip_addr=site_ip)
-                            difference = datetime.now() - db_ip.get('last_access')
-                            sleep_time = self.delay - difference.total_seconds()
-                            if sleep_time <= 0:
-                                self.update_ip_time(db_ip.get('id'))
-                                break
-                            else:
-                                sleep(1)
-                        if self.DEBUG:
-                            print('OUT:lock', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'))
-
-                    # code to check access time, update it immediately in DB, sleep outside the lock
-                    #with self.access_time_lock:
-                    #    print('IN:lock ', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'))
-                    #    db_ip = self.ip_table.get(ip_addr=site_ip)
-                    #    difference = datetime.now() - db_ip.get('last_access')
-                    #    sleep_time = self.delay - ceil(difference.total_seconds())
-                    #    if sleep_time <= 0:
-                    #        self.update_ip_time(db_ip.get('id'))
-                    #    else:
-                    #        self.update_ip_time(db_ip.get('id'),
-                    #                            pre_set_time=datetime.now() + timedelta(seconds=sleep_time))
-                    #    print('OUT:lock', self.processing_page.get('url'), datetime.now().strftime('%H:%M:%S'), sleep_time)
-                    #if sleep_time > 0:
-                    #    sleep(sleep_time)
-
+                try:
                     self.driver.get(self.current_url)
                     sleep(self.wait_for)  # Loading website
-                    status_code, is_html, content_type = 200, False, 'text/html'
+                except Exception as e:
+                    print('E13:', e)
+                print("TEST3")
+                status_code, is_html, content_type = 200, False, 'text/html'
+                print("TEST4")
+                try:
+
                     for request in self.driver.requests:
                         if request.response and request.url == self.url_to_canon(self.driver.current_url):
                             status_code = request.response.status_code
                             is_html = 'text/html' in request.response.headers['Content-Type']
                             content_type = request.response.headers['Content-Type']
                             break
-
-                    #  update request time for this IP in DB
-                    if status_code != 200:
-                        self.processing_page = self.page_table.update(values={'page_type_code': "TRASH",
-                                                                              'http_status_code': status_code},
-                                                                      filters={'id': self.current_page_id})
-                        # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
-                        continue
-
-                    if is_html:
-                        html = self.driver.page_source
-                        hashed_html = self.hash_function(html)
-                        page_exists = self.exsist_duplicate(hashed_html)
-                        if page_exists is None:
-                            processing_page = self.page_table.update(values={'html_hash': hashed_html,
-                                                                             'page_type_code': "HTML",
-                                                                             'http_status_code': status_code,
-                                                                             'accessed_time': datetime.now().strftime(
-                                                                                 '%Y-%m-%d %H:%M:%S'),
-                                                                             'html_content': html
-                                                                             }, filters={'id': self.current_page_id})
-
-                            # Checking all URLS for a HREF TAG
-                            elems = self.driver.find_elements_by_xpath("//a[@href]")
-                            for e in elems:
-                                self.add_to_frontier(rp, site_db, e.get_attribute("href"), disallow)
-
-                            # Checking all URLS for a javascript document.href, location.href
-                            jelems = self.parse_urls_from_javascript_onclick(
-                                self.driver.find_elements_by_xpath("//*[@onclick]"))
-                            for e in jelems:
-                                self.add_to_frontier(rp, site_db, e.get_attribute("href"), disallow)
-
-                            # Storing images to DB
-                            srcs = self.driver.find_elements_by_xpath("//img[@src]")
-                            for s in srcs:
-                                src = s.get_attribute("src")
-                                if 'gov.si' in urlparse(src).netloc:
-                                    self.insert_image(self.current_page_id, src.rsplit('/', 1)[1], rp, site_db,
-                                                      s.get_attribute("src"),
-                                                      disallow)
-                        # duplicated page
-                        else:
-                            processing_page = self.page_table.update(values={'html_hash': hashed_html,
-                                                                             'page_type_code': "DUPLICATE",
-                                                                             'http_status_code': status_code,
-                                                                             'accessed_time': datetime.now().strftime(
-                                                                                 '%Y-%m-%d %H:%M:%S'),
-                                                                             'html_content': None
-                                                                             }, filters={'id': self.current_page_id})
-                    # page type is not HTML
-                    else:
-                        try:
-                            file_type = mimetypes.guess_extension(content_type)  # docx, pdf
-                            if file_type is None:
-                                file_type = 'OTHER'
-                            if self.current_url[-1] == '/':
-                                file_name = self.current_url
-                            else:
-                                file_name = self.current_url[:-1].rsplit('/', 1)[1] + file_type
-                            processing_page = self.page_table.update(values={'html_hash': None,
-                                                                             'page_type_code': "BINARY",
-                                                                             'http_status_code': status_code,
-                                                                             'accessed_time': datetime.now().strftime(
-                                                                                 '%Y-%m-%d %H:%M:%S'),
-                                                                             'html_content': None
-                                                                             }, filters={'id': self.current_page_id})
-
-                            if file_type[1:].upper() in ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ',
-                                                         'AI', 'PSD']:
-                                image_to_insert = {'page_id': self.current_page_id,
-                                                   'filename': file_name,
-                                                   'content_type': file_type[1:],
-                                                   'data': None,
-                                                   'accessed_time': None
-                                                   }
-                                created_image = self.image_table.create(image_to_insert)
-                            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS']:
-                                page_data_insert = {'page_id': self.current_page_id,
-                                                    'data_type_code': self.current_url.rsplit('/', 1)[1].split('.')[
-                                                        1].upper(),
-                                                    'data': None}
-                                new_page_data = self.pagedata_table.create(page_data_insert)
-                            else:
-                                page_data_insert = {'page_id': self.current_page_id,
-                                                    'data_type_code': 'OTHER',
-                                                    'data': None}
-                                new_page_data = self.pagedata_table.create(page_data_insert)
-                        except Exception as e:
-                            print('E7:', e)
-
+                except Exception as e:
+                    print('E12:', e)
+                #  update request time for this IP in DB
+                print("TEST5")
+                print(status_code)
+                print(type(status_code))
+                if status_code != 200:
+                    print("Status code ni 200: " + str(status_code))
+                    print("TRASH")
                     # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+                    break
+                print(status_code)
+                print("TEST6")
+                if is_html:
+                    print("TEST7")
+                    html = self.driver.page_source
+                    hashed_html = self.hash_function(html)
 
-            except Exception as e:
-                self.processing_page = self.page_table.update(values={'page_type_code': "TRASH",
-                                                                      'html_content': e},
-                                                              filters={'id': self.current_page_id})
-                print('E8:', e)
+                    elems = self.driver.find_elements_by_xpath("//a[@href]")
+                    for e in elems:
+                        self.add_to_frontier(rp, site_db, e.get_attribute("href"), disallow)
+
+                    # Checking all URLS for a javascript document.href, location.href
+                    jelems = self.parse_urls_from_javascript_onclick(
+                        self.driver.find_elements_by_xpath("//*[@onclick]"))
+                    for e in jelems:
+                        self.add_to_frontier(rp, site_db, e.get_attribute("href"), disallow)
+
+                    # Storing images to DB
+                    srcs = self.driver.find_elements_by_xpath("//img[@src]")
+                    for s in srcs:
+                        src = s.get_attribute("src")
+                        if 'gov.si' in urlparse(src).netloc:
+                            self.insert_image(self.current_page_id, src.rsplit('/', 1)[1], rp, site_db,
+                                              s.get_attribute("src"),
+                       disallow)
+
+                # page type is not HTML
+                else:
+                    try:
+                        print(self.current_url)
+                        print(content_type)
+                        print("Tukie1")
+
+                        file_type = mimetypes.guess_extension(content_type)  # docx, pdf
+
+                        print(file_type)
+                        print("neki" + file_type)
+                        print("Not html")
+                        break
+                    except Exception as e:
+                        print('E7:', e)
+
+                # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+
+        except Exception as e:
+            print('E8:', e)
             # finally:
             #     if self.DEBUG:
             #         print("FATAL CRAWLER EXCEPTION, RESTART")
