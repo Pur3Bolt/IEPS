@@ -19,16 +19,19 @@ def url_to_canon(url):
     if neki2 != '' and '.' not in neki2 and not neki2.endswith('/'):
         parsed_url += '/'
     parsed_url = urllib.parse.unquote(parsed_url)
-    ena, dva = parsed_url.split(':')
-    if ' ' in dva:
-        parsed_url = ena + ':' + urllib.parse.quote(dva)
+    if parsed_url.count(':') == 1:
+        ena, dva = parsed_url.split(':')
+        if ' ' in dva:
+            parsed_url = ena + ':' + urllib.parse.quote(dva)
     return parsed_url
 
+#print("https://www.gov.si/gone?src=http://www.gu.gov.si&url=http://gu.arhiv-spletisc.gov.si/si/delovnapodrocja_gu/projekti_gu/registri/kszi/komisija/")
+#print(urlcanon.parse_url("https://www.gov.si/gone?src=http://www.gu.gov.si&url=http://gu.arhiv-spletisc.gov.si/si/delovnapodrocja_gu/projekti_gu/registri/kszi/komisija/"))
 
-# print(url_to_canon("https://www.gov.si/novice/rss?tagID=621/"))
+#print(url_to_canon("https://www.gov.si/gone?src=http://www.gu.gov.si&url=http://gu.arhiv-spletisc.gov.si/si/delovnapodrocja_gu/projekti_gu/registri/kszi/komisija/"))
 
 
-crawler = Crawler1("https://www.gov.si/novice/rss?tagID=554/")
+crawler = Crawler1("http://www.gu.gov.si/si/delovnapodrocja_gu/projekti_gu/registri/kszi/komisija/ ")
 crawler.process()
 
 

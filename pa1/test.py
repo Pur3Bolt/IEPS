@@ -16,9 +16,10 @@ def url_to_canon(url):
     if neki2 != '' and '.' not in neki2 and not neki2.endswith('/'):
         parsed_url += '/'
     parsed_url = urllib.parse.unquote(parsed_url)
-    ena, dva = parsed_url.split(':')
-    if ' ' in dva:
-        parsed_url = ena + ':' + urllib.parse.quote(dva)
+    if parsed_url.count(':') == 1:
+        ena, dva = parsed_url.split(':')
+        if ' ' in dva:
+            parsed_url = ena + ':' + urllib.parse.quote(dva)
     return parsed_url
 
 
