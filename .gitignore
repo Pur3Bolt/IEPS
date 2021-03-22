@@ -3,3 +3,4 @@ venv/
 pa1/chromedriver.exe
 pa1/database/__pycache__/
 *.pyc
+pa1/docker/

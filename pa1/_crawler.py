@@ -127,15 +127,22 @@ class Crawler:
         try:
             result = urlparse(s)
             return all([result.scheme, result.netloc, result.path])
-        except:
+        except Exception as e:
+            print('E1:', e)
             return False
 
     def add_to_frontier(self, rp, site_db, url, disallow):
-        url = self.url_to_canon(url)
         if not self.uri_validator(url):
             if self.DEBUG:
                 print("Not a URL:", url)
             return None
+        if 'gov.si' not in urlparse(url).netloc:
+            if self.DEBUG:
+                print("Not gov.si domain:", url)
+            return None
+
+        url = self.url_to_canon(url)
+
         if not rp.can_fetch(self.USER_AGENT, url):
             if self.DEBUG:
                 print("RP not allowed to crawl this URL:", url)
@@ -144,12 +151,8 @@ class Crawler:
             if self.DEBUG:
                 print("Disallowed to crawl this URL:", url)
             return None
-        if 'gov.si' not in urlparse(url).netloc:
-            if self.DEBUG:
-                print("Not gov.si domain:", url)
-            return None
 
-        data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'OTHER']
+        data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS']
         image_type = ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ', 'AI', 'PSD']
         if '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in data_type:
             page_insert_data = {'site_id': site_db.get("id"),
@@ -164,8 +167,7 @@ class Crawler:
                 self.create_link(self.current_page_id, new_page.get("id"))
                 return new_page
             except Exception as e:
-                if self.DEBUG:
-                    print(e)
+                print('E2:', e)
         elif '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in image_type:
             page_insert_data = {'site_id': site_db.get("id"),
                                 'page_type_code': 'BINARY',
@@ -182,8 +184,7 @@ class Crawler:
                 self.create_link(self.current_page_id, new_page.get("id"))
                 return new_page
             except Exception as e:
-                if self.DEBUG:
-                    print(e)
+                print('E3:', e)
         else:
             url_exsist_in_db = self.page_table.get(url=url)
             if url_exsist_in_db is None:
@@ -196,8 +197,7 @@ class Crawler:
                     return new_page
                 except Exception as e:
                     # probably a duplicate URL in DB
-                    if self.DEBUG:
-                        print(e)
+                    print('E4:', e)
             else:
                 self.create_link(self.current_page_id, url_exsist_in_db.get("id"))
 
@@ -206,7 +206,7 @@ class Crawler:
             link_to_insert = {'from_page': from_id, 'to_page': to_id}
             self.link_table.create(link_to_insert)
         except Exception as e:
-            pass
+            print('E5:', e)
 
     def url_to_canon(self, url):
         parsed_url = urlcanon.parse_url(url)
@@ -263,7 +263,7 @@ class Crawler:
                                    }
                 created_image = self.image_table.create(image_to_insert)
             except Exception as e:
-                pass
+                print('E6:', e)
         else:
             self.create_link(self.current_page_id, url_exsist_in_db.get("id"))
 
@@ -331,6 +331,7 @@ class Crawler:
                         self.processing_page = self.page_table.update(values={'page_type_code': "TRASH"},
                                                                       filters={'id': self.current_page_id})
                         # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
+                        print('E:', e)
                         continue
 
                     # db_ip = self.ip_table.get(ip_addr=site_ip)
@@ -448,7 +449,7 @@ class Crawler:
                                                    'accessed_time': None
                                                    }
                                 created_image = self.image_table.create(image_to_insert)
-                            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC']:
+                            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS']:
                                 page_data_insert = {'page_id': self.current_page_id,
                                                     'data_type_code': self.current_url.rsplit('/', 1)[1].split('.')[
                                                         1].upper(),
@@ -460,24 +461,22 @@ class Crawler:
                                                     'data': None}
                                 new_page_data = self.pagedata_table.create(page_data_insert)
                         except Exception as e:
-                            if self.DEBUG:
-                                print(e)
+                            print('E7:', e)
 
                     # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
 
             except Exception as e:
-                if self.DEBUG:
-                    self.processing_page = self.page_table.update(values={'page_type_code': "TRASH",
-                                                                          'html_content': e},
-                                                                  filters={'id': self.current_page_id})
-                    print(e)
-            finally:
-                if self.DEBUG:
-                    print("FATAL CRAWLER EXCEPTION, RESTART")
-                self.processing_page = self.page_table.update(values={'page_type_code': "TRASH"},
+                self.processing_page = self.page_table.update(values={'page_type_code': "TRASH",
+                                                                      'html_content': e},
                                                               filters={'id': self.current_page_id})
-                self.driver.quit()
-                options = Options()
-                options.add_argument("--headless")
-                options.add_argument("user-agent=" + self.USER_AGENT)
-                self.driver = webdriver.Chrome(self.WEB_DRIVER_LOCATION, options=options)
+                print('E8:', e)
+            # finally:
+            #     if self.DEBUG:
+            #         print("FATAL CRAWLER EXCEPTION, RESTART")
+            #     self.processing_page = self.page_table.update(values={'page_type_code': "TRASH"},
+            #                                                   filters={'id': self.current_page_id})
+            #     self.driver.quit()
+            #     options = Options()
+            #     options.add_argument("--headless")
+            #     options.add_argument("user-agent=" + self.USER_AGENT)
+            #     self.driver = webdriver.Chrome(self.WEB_DRIVER_LOCATION, options=options)
