@@ -20,9 +20,9 @@ import database.tables as tables
 class Crawler:
     def __init__(self, frontier_lock, access_time_lock):
         self.USER_AGENT = "fri-wier-agmsak"
-        self.WEB_DRIVER_LOCATION = "C:\\Users\\Andrej\\Downloads\\chromedriver_win32org\\chromedriver"
+        self.WEB_DRIVER_LOCATION = "chromedriver"
         self.wait_for = 5
-        self.delay = 6
+        self.delay = 5
         self.frontier_lock = frontier_lock
         self.access_time_lock = access_time_lock
         self.DEBUG = True
@@ -114,7 +114,7 @@ class Crawler:
             if rrate:
                 delay = ceil(rrate.seconds / rrate.requests)
             else:
-                delay = 6  # if no param was set, delay will be 5 sec
+                delay = 5  # if no param was set, delay will be 5 sec
         return delay
 
     def sleep_untill_allowed_request(self, time_old, delay):
