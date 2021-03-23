@@ -15,7 +15,7 @@ import urlcanon
 from selenium.webdriver.chrome.options import Options
 from seleniumwire import webdriver
 import database.tables as tables
-
+from collections import OrderedDict
 
 class Crawler:
     def __init__(self, frontier_lock, access_time_lock):
@@ -208,23 +208,26 @@ class Crawler:
         except Exception as e:
             print('E5:', e)
 
-    def url_to_canon(self, url):
+    def url_to_canon(url):
+        neki3 = urlparse(url)
+        list = sorted(urllib.parse.parse_qsl(neki3.query))
+        kaba = urllib.parse.urlencode(OrderedDict(list))
+        url = urllib.parse.urlunparse((neki3.scheme, neki3.netloc, neki3.path, None, kaba, neki3.fragment))
         parsed_url = urlcanon.parse_url(url)
         urlcanon.whatwg(parsed_url)
         parsed_url = str(parsed_url)
         if parsed_url.lower().endswith("index.html"):
             parsed_url = parsed_url[:parsed_url.index("index.html")]
-        if '/' in parsed_url:
-            neki2 = parsed_url.rsplit('/', 1)[1]
-            if '#' in neki2:
-                parsed_url = parsed_url[:parsed_url.index("#")]
-            if neki2 != '' and '.' not in neki2 and not neki2.endswith('/') and not parsed_url.endswith('/'):
-                parsed_url += '/'
-            parsed_url = urllib.parse.unquote(parsed_url)
-            if parsed_url.count(':') == 1:
-                ena, dva = parsed_url.split(':')
-                if ' ' in dva:
-                    parsed_url = ena + ':' + urllib.parse.quote(dva)
+        neki2 = parsed_url.rsplit('/', 1)[1]
+        if '#' in neki2:
+            parsed_url = parsed_url[:parsed_url.index("#")]
+        if neki2 != '' and '.' not in neki2 and not neki2.endswith('/'):
+            parsed_url += '/'
+        parsed_url = urllib.parse.unquote(parsed_url)
+        if parsed_url.count(':') == 1:
+            ena, dva = parsed_url.split(':')
+            if ' ' in dva:
+                parsed_url = ena + ':' + urllib.parse.quote(dva)
         return parsed_url
 
     def hash_function(self, html):
