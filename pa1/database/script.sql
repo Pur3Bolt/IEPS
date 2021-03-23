@@ -126,4 +126,35 @@ create index idx_link_from_page
 create index idx_link_to_page
     on link (to_page);
 
+insert into crawldb.page_type (code)
+values  ('HTML'),
+        ('BINARY'),
+        ('DUPLICATE'),
+        ('FRONTIER'),
+        ('PROCESSING'),
+        ('TRASH');
 
+insert into crawldb.data_type (code)
+values  ('PDF'),
+        ('DOC'),
+        ('DOCX'),
+        ('PPT'),
+        ('PPTX'),
+        ('OTHER'),
+        ('ZIP'),
+        ('CSV'),
+        ('XLSX'),
+        ('ODS'),
+        ('MP4');
+
+INSERT INTO crawldb.page (site_id, page_type_code, url, html_content, http_status_code, accessed_time, html_hash)
+VALUES(null, 'FRONTIER', 'http://gov.si/', null, null, null, null);
+
+INSERT INTO crawldb.page (site_id, page_type_code, url, html_content, http_status_code, accessed_time, html_hash)
+VALUES(null, 'FRONTIER', 'http://evem.gov.si/', null, null, null, null);
+
+INSERT INTO crawldb.page (site_id, page_type_code, url, html_content, http_status_code, accessed_time, html_hash)
+VALUES(null, 'FRONTIER', 'http://e-uprava.gov.si/', null, null, null, null);
+
+INSERT INTO crawldb.page (site_id, page_type_code, url, html_content, http_status_code, accessed_time, html_hash)
+VALUES(null, 'FRONTIER', 'http://e-prostor.gov.si/', null, null, null, null);
