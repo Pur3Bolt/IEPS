@@ -15,8 +15,9 @@ import urlcanon
 from selenium.webdriver.chrome.options import Options
 from seleniumwire import webdriver
 import database.tables as tables
-from collections import OrderedDict
 import url_normalize
+
+
 class Crawler:
     def __init__(self, frontier_lock, access_time_lock):
         self.USER_AGENT = "fri-wier-agmsak"
@@ -209,10 +210,6 @@ class Crawler:
             print('E5:', e)
 
     def url_to_canon(self, url):
-        neki3 = urlparse(url)
-        list = sorted(urllib.parse.parse_qsl(neki3.query))
-        kaba = urllib.parse.urlencode(OrderedDict(list))
-        url = urllib.parse.urlunparse((neki3.scheme, neki3.netloc, neki3.path, None, kaba, neki3.fragment))
         parsed_url = urlcanon.parse_url(url)
         urlcanon.whatwg(parsed_url)
         parsed_url = str(parsed_url)

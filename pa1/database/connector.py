@@ -14,7 +14,7 @@ class Database:
         self.password = 'SecretPassword'
         self.host = 'localhost'
         self.port = '5432'
-        self.dbname = ''
+        self.dbname = 'test'
 
         self.DSN = "dbname='%s' user='%s' host='%s' password='%s'" \
                    % (self.dbname, self.username, self.host, self.password)
