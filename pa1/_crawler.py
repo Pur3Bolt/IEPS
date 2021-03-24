@@ -153,7 +153,7 @@ class Crawler:
                 print("Disallowed to crawl this URL:", url)
             return None
 
-        data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4']
+        data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4', 'XLS']
         image_type = ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ', 'AI', 'PSD']
         if '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in data_type:
             page_insert_data = {'site_id': site_db.get("id"),
@@ -467,7 +467,7 @@ class Crawler:
                                                    'accessed_time': None
                                                    }
                                 created_image = self.image_table.create(image_to_insert)
-                            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4']:
+                            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4', 'XLS']:
                                 page_data_insert = {'page_id': self.current_page_id,
                                                     'data_type_code': file_type[1:].upper(),
                                                     'data': None}
