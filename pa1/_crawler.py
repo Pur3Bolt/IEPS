@@ -16,7 +16,7 @@ from selenium.webdriver.chrome.options import Options
 from seleniumwire import webdriver
 import database.tables as tables
 from collections import OrderedDict
-
+import url_normalize
 class Crawler:
     def __init__(self, frontier_lock, access_time_lock):
         self.USER_AGENT = "fri-wier-agmsak"
@@ -228,6 +228,7 @@ class Crawler:
             ena, dva = parsed_url.split(':')
             if ' ' in dva:
                 parsed_url = ena + ':' + urllib.parse.quote(dva)
+        parsed_url = url_normalize.url_normalize(parsed_url)
         return parsed_url
 
     def hash_function(self, html):
@@ -376,7 +377,7 @@ class Crawler:
                     sleep(self.wait_for)  # Loading website
                     status_code, is_html, content_type = 200, False, 'text/html'
                     for request in self.driver.requests:
-                        if request.response and request.url == self.url_to_canon(self.driver.current_url):
+                        if request.response and self.url_to_canon(request.url) == self.url_to_canon(self.driver.current_url):
                             status_code = request.response.status_code
                             is_html = 'text/html' in request.response.headers['Content-Type']
                             content_type = request.response.headers['Content-Type']
