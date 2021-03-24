@@ -208,7 +208,7 @@ class Crawler:
         except Exception as e:
             print('E5:', e)
 
-    def url_to_canon(url):
+    def url_to_canon(self, url):
         neki3 = urlparse(url)
         list = sorted(urllib.parse.parse_qsl(neki3.query))
         kaba = urllib.parse.urlencode(OrderedDict(list))
