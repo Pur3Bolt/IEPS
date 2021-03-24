@@ -462,15 +462,14 @@ class Crawler:
                                                          'AI', 'PSD']:
                                 image_to_insert = {'page_id': self.current_page_id,
                                                    'filename': file_name,
-                                                   'content_type': file_type[1:],
+                                                   'content_type': file_type[1:].upper(),
                                                    'data': None,
                                                    'accessed_time': None
                                                    }
                                 created_image = self.image_table.create(image_to_insert)
                             elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4']:
                                 page_data_insert = {'page_id': self.current_page_id,
-                                                    'data_type_code': self.current_url.rsplit('/', 1)[1].split('.')[
-                                                        1].upper(),
+                                                    'data_type_code': file_type[1:].upper(),
                                                     'data': None}
                                 new_page_data = self.pagedata_table.create(page_data_insert)
                             else:
