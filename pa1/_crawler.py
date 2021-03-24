@@ -329,11 +329,11 @@ class Crawler:
                         disallow = self.create_disallow_list(site_db.get("robots_content"))
 
                         site_ip = gethostbyname(urlparse(self.current_url).netloc)
-                    except:
+                    except Exception as e:
                         self.processing_page = self.page_table.update(values={'page_type_code': "TRASH"},
                                                                       filters={'id': self.current_page_id})
                         # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
-                        print('E:', e)
+                        print('E7:', e)
                         continue
 
                     # db_ip = self.ip_table.get(ip_addr=site_ip)
@@ -478,7 +478,7 @@ class Crawler:
                                                     'data': None}
                                 new_page_data = self.pagedata_table.create(page_data_insert)
                         except Exception as e:
-                            print('E7:', e)
+                            print('E8:', e)
 
                     # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
 
@@ -486,7 +486,7 @@ class Crawler:
                 self.processing_page = self.page_table.update(values={'page_type_code': "TRASH",
                                                                       'html_content': e},
                                                               filters={'id': self.current_page_id})
-                print('E8:', e)
+                print('E9:', e)
             # finally:
             #     if self.DEBUG:
             #         print("FATAL CRAWLER EXCEPTION, RESTART")
