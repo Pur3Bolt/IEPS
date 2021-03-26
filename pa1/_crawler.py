@@ -372,17 +372,17 @@ class Crawler:
 
                     self.driver.get(self.current_url)
                     sleep(self.wait_for)  # Loading website
-                    status_code, is_html, content_type = 200, False, 'text/html'
+                    status_code, is_html, content_type = 0, False, 'text/html'
                     if self.driver.current_url == 'data:,':
                         for request in self.driver.requests:
-                            if request.response.headers['Content-Type'] is not None:
+                            if request.response and request.response.headers['Content-Type'] is not None:
                                 is_html = 'text/html' in request.response.headers['Content-Type']
                                 content_type = request.response.headers['Content-Type']
                             else:
                                 content_type = 'unknown'
                     else:
                         for request in self.driver.requests:
-                            if self.url_to_canon(request.url) == self.url_to_canon(self.driver.current_url):
+                            if request.response and self.url_to_canon(request.url) == self.url_to_canon(self.driver.current_url):
                                 status_code = request.response.status_code
                                 if request.response.headers['Content-Type'] is not None:
                                     is_html = 'text/html' in request.response.headers['Content-Type']
