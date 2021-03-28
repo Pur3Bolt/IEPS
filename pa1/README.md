@@ -18,3 +18,6 @@ V primeru, da izberemo druge prijavne podatke, moramo le-te vnesti v datoteko `d
 ## Poganjanje skripte
 
 Skripto poženemo z ukazom `python process.py --threads n`, kjer si parameter `n` poljubno izberemo. Skripa bo, glede na zmogljivosti računalnika, ustvarila do `n` niti pajkov.
+
+## Podatkovna baza
+Podatkovna baza je dostopna na sledeči povezavi: https://www.dropbox.com/s/79g8avlrxtj0yzf/db?dl=0
