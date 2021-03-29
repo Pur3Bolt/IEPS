@@ -1,6 +1,6 @@
 venv/
 .idea/
-pa1/chromedriver.exe
+pa1/crawler/chromedriver.exe
 pa1/database/__pycache__/
 *.pyc
 pa1/docker/pgdata/
