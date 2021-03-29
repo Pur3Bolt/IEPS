@@ -15,6 +15,7 @@ import urlcanon
 from selenium.webdriver.chrome.options import Options
 from seleniumwire import webdriver
 import database.tables as tables
+import url_normalize
 
 
 class Crawler:
@@ -152,7 +153,7 @@ class Crawler:
                 print("Disallowed to crawl this URL:", url)
             return None
 
-        data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4']
+        data_type = ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4', 'XLS']
         image_type = ['PNG', 'JPG', 'GIF', 'JPEG', 'BMP', 'TIF', 'TIFF', 'SVG', 'SVGZ', 'AI', 'PSD']
         if '.' in url.rsplit('/', 1)[1] and url.rsplit('/', 1)[1].split('.')[1].upper() in data_type:
             page_insert_data = {'site_id': site_db.get("id"),
@@ -214,17 +215,17 @@ class Crawler:
         parsed_url = str(parsed_url)
         if parsed_url.lower().endswith("index.html"):
             parsed_url = parsed_url[:parsed_url.index("index.html")]
-        if '/' in parsed_url:
-            neki2 = parsed_url.rsplit('/', 1)[1]
-            if '#' in neki2:
-                parsed_url = parsed_url[:parsed_url.index("#")]
-            if neki2 != '' and '.' not in neki2 and not neki2.endswith('/') and not parsed_url.endswith('/'):
-                parsed_url += '/'
-            parsed_url = urllib.parse.unquote(parsed_url)
-            if parsed_url.count(':') == 1:
-                ena, dva = parsed_url.split(':')
-                if ' ' in dva:
-                    parsed_url = ena + ':' + urllib.parse.quote(dva)
+        neki2 = parsed_url.rsplit('/', 1)[1]
+        if '#' in neki2:
+            parsed_url = parsed_url[:parsed_url.index("#")]
+        if neki2 != '' and '.' not in neki2 and not neki2.endswith('/'):
+            parsed_url += '/'
+        parsed_url = urllib.parse.unquote(parsed_url)
+        if parsed_url.count(':') == 1:
+            ena, dva = parsed_url.split(':')
+            if ' ' in dva:
+                parsed_url = ena + ':' + urllib.parse.quote(dva)
+        parsed_url = url_normalize.url_normalize(parsed_url)
         return parsed_url
 
     def hash_function(self, html):
@@ -328,11 +329,11 @@ class Crawler:
                         disallow = self.create_disallow_list(site_db.get("robots_content"))
 
                         site_ip = gethostbyname(urlparse(self.current_url).netloc)
-                    except:
+                    except Exception as e:
                         self.processing_page = self.page_table.update(values={'page_type_code': "TRASH"},
                                                                       filters={'id': self.current_page_id})
                         # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
-                        print('E:', e)
+                        print('E7:', e)
                         continue
 
                     # db_ip = self.ip_table.get(ip_addr=site_ip)
@@ -371,13 +372,26 @@ class Crawler:
 
                     self.driver.get(self.current_url)
                     sleep(self.wait_for)  # Loading website
-                    status_code, is_html, content_type = 200, False, 'text/html'
-                    for request in self.driver.requests:
-                        if request.response and request.url == self.url_to_canon(self.driver.current_url):
-                            status_code = request.response.status_code
-                            is_html = 'text/html' in request.response.headers['Content-Type']
-                            content_type = request.response.headers['Content-Type']
-                            break
+                    status_code, is_html, content_type = 0, False, 'text/html'
+                    if self.driver.current_url == 'data:,':
+                        for request in self.driver.requests:
+                            if request.response:
+                                status_code = request.response.status_code
+                                if request.response.headers['Content-Type'] is not None:
+                                    is_html = 'text/html' in request.response.headers['Content-Type']
+                                    content_type = request.response.headers['Content-Type']
+                                else:
+                                    content_type = 'unknown'
+                    else:
+                        for request in self.driver.requests:
+                            if request.response and self.url_to_canon(request.url) == self.url_to_canon(self.driver.current_url):
+                                status_code = request.response.status_code
+                                if request.response.headers['Content-Type'] is not None:
+                                    is_html = 'text/html' in request.response.headers['Content-Type']
+                                    content_type = request.response.headers['Content-Type']
+                                else:
+                                    content_type = 'unknown'
+                                break
 
                     #  update request time for this IP in DB
                     if status_code != 200:
@@ -450,15 +464,14 @@ class Crawler:
                                                          'AI', 'PSD']:
                                 image_to_insert = {'page_id': self.current_page_id,
                                                    'filename': file_name,
-                                                   'content_type': file_type[1:],
+                                                   'content_type': file_type[1:].upper(),
                                                    'data': None,
                                                    'accessed_time': None
                                                    }
                                 created_image = self.image_table.create(image_to_insert)
-                            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4']:
+                            elif file_type[1:].upper() in ['DOCX', 'PDF', 'PPT', 'PPTX', 'DOC', 'ZIP', 'CSV', 'XLSX', 'ODS', 'MP4', 'XLS']:
                                 page_data_insert = {'page_id': self.current_page_id,
-                                                    'data_type_code': self.current_url.rsplit('/', 1)[1].split('.')[
-                                                        1].upper(),
+                                                    'data_type_code': file_type[1:].upper(),
                                                     'data': None}
                                 new_page_data = self.pagedata_table.create(page_data_insert)
                             else:
@@ -467,7 +480,7 @@ class Crawler:
                                                     'data': None}
                                 new_page_data = self.pagedata_table.create(page_data_insert)
                         except Exception as e:
-                            print('E7:', e)
+                            print('E8:', e)
 
                     # self.processing_page = self.page_table.get(page_type_code='FRONTIER')
 
@@ -475,7 +488,7 @@ class Crawler:
                 self.processing_page = self.page_table.update(values={'page_type_code': "TRASH",
                                                                       'html_content': e},
                                                               filters={'id': self.current_page_id})
-                print('E8:', e)
+                print('E9:', e)
             # finally:
             #     if self.DEBUG:
             #         print("FATAL CRAWLER EXCEPTION, RESTART")

@@ -19,13 +19,11 @@ class GenericTable(SQLExecutor):
                           fetch_all=kwargs.pop('fetch_all', True),
                           order_by=kwargs.pop('order_by', ['id']))
 
-
     def list2(self, *args, **kwargs):
         return self._list(table=self.table,
                           fields=kwargs.pop('fields', '*'),
                           fetch_all=kwargs.pop('fetch_all', True),
                           order_by=kwargs.pop('order_by', ['code']))
-
 
     def filter(self, *args, **kwargs):
         return self._filter(table=self.table,
@@ -33,6 +31,10 @@ class GenericTable(SQLExecutor):
                             data=kwargs,
                             fetch_all=kwargs.pop('fetch_all', True),
                             order_by=kwargs.pop('order_by', ['-id']))
+
+    def delete(self, *args, **kwargs):
+        return self._delete(table=self.table,
+                            filters=kwargs.pop('filters', None))
 
     def get(self, *args, **kwargs):
         return self._filter(table=self.table,

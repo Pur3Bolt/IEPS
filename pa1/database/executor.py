@@ -44,6 +44,22 @@ class SQLExecutor(Database):
             else:
                 return cursor.fetchone()
 
+    def _delete(self, table, filters):
+        if len(filters) == 0:
+            return None
+
+        _f = 'DELETE FROM {0}.{1} WHERE {2}'.format(
+            self.schema,
+            table,
+            ','.join(["{0}={1}".format(k, v) for k, v in prepare(filters).items()]))
+
+        if self.DEBUG:
+            print("filter - ", _f)
+
+        with self.transaction() as cursor:
+            query = cursor.mogrify(_f)
+            cursor.execute(query)
+
     def _filter(self, table, fields, data, fetch_all=True, order_by=['-id']):
         _f = 'SELECT {0} FROM {1}.{2} WHERE {3} ORDER BY {4}'.format(
             ','.join(fields),
