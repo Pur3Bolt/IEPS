@@ -2,7 +2,7 @@ import json
 import re
 
 
-f = open("strani/overstock.com/jewelry02.html", "r")
+f = open("strani/overstock.com/jewelry01.html", "r")
 s = f.read()
 title = '<td valign="top"> \n<a href=".+"><b>(.+?)</b></a>'
 listprice = '<tr><td align="right" nowrap="nowrap"><b>List Price:</b></td><td align="left" nowrap="nowrap"><s>(\$\d+,?\d+\.\d+)</s></td></tr>'
