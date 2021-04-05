@@ -39,12 +39,15 @@ items = {
     'Description': re_description[0],
     'BundleSavings': re_bundle_savings[0],
 }
+games = []
 for i in range(len(re_game_title)):
-    items[i+1] = {
+    games.append({
         'GameTitle': re_game_title[i],
         'GameCategories': re_game_categories[i],
         'GameDiscount': re_game_discount[i],
         'GameFullPrice': re_game_full_price[i],
         'GameDiscountedPrice': re_game_discounted_price[i],
-    }
+    })
+items['Games'] = games
 print(json.dumps(items, indent=4))
+# print(items)
