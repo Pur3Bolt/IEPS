@@ -27,3 +27,4 @@ for i in range(len(re_title)):
         'Content': re_content[i],
     }
 print(json.dumps(items, indent=4))
+# print(items)

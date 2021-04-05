@@ -24,4 +24,4 @@ items = {
     'Lead': re_lead[0],
     'Content': re_content[0]
 }
-print(json.dumps(items, indent=4))
+print(items)

@@ -5,11 +5,13 @@ from lxml import html
 f = open("strani/overstock.com/jewelry01.html", "r")
 s = f.read()
 tree = html.fromstring(s)
-title = '//tr[2]/td/table/tbody/tr/td/table/tbody/tr/td[2]/a/b/text()'
-listprice = '//td[2]/s/text()'
-price = '//tr[2]/td[2]/span/b/text()'
-saving = "//tr[3]/td[2]/span/text()"
-content = '//td[2]/table/tbody/tr/td[2]/span/text()'
+
+title = '//td[@valign="top"]/a/b/text()'
+listprice = '//td[@align="left"][@nowrap]/s/text()'
+price = '//span[@class="bigred"]/b/text()'
+saving = '//span[@class="littleorange"]/text()'
+content = '//span[@class="normal"]/descendant-or-self::*/text()'
+
 xp_title = tree.xpath(title)
 xp_listprice = tree.xpath(listprice)
 xp_price = tree.xpath(price)
@@ -24,6 +26,7 @@ for i in range(len(xp_title)):
         'Price': xp_price[i],
         'Saving': xp_saving[i][:xp_saving[i].index(' (')],
         'SavingPercent': xp_saving[i][xp_saving[i].index('(')+1:-1],
-        'Content': xp_content[i],
+        'Content': xp_content[2*i]+' '+xp_content[2*i+1],
     }
 print(json.dumps(items, indent=4))
+# print(items)
