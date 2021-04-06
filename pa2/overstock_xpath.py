@@ -12,7 +12,7 @@ listprice = '//td[@align="left"][@nowrap]/s/text()'
 price = '//span[@class="bigred"]/b/text()'
 saving = '//td[@align="left"]/span[@class="littleorange"]/substring-before(text(), " (")'
 saving_percent = '//td[@align="left"]/span[@class="littleorange"]/substring-before(substring-after(text(), " ("), ")")'
-content = '//span[@class="normal"]/descendant-or-self::*/text()'
+content = '//span[@class="normal"]/text()'
 
 xp_title = tree.xpath(title)
 xp_listprice = tree.xpath(listprice)
@@ -29,7 +29,7 @@ for i in range(len(xp_title)):
         'Price': xp_price[i],
         'Saving': xp_saving[i],
         'SavingPercent': xp_saving_percent[i],
-        'Content': xp_content[2*i]+' '+xp_content[2*i+1],
+        'Content': xp_content[i],
     }
-# print(json.dumps(items, indent=4))
-print(items)
+print(json.dumps(items, indent=4))
+# print(items)

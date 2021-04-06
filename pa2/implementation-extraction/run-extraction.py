@@ -4,7 +4,8 @@ from regex_extractor import RegexExtractor
 from xpath_extractor import XPathExtractor
 
 
-algorithm = sys.argv[1].upper()
+# algorithm = sys.argv[1].upper()
+algorithm = 'A'
 if algorithm == 'A':
     # Overstock
     overstock = {
@@ -13,7 +14,7 @@ if algorithm == 'A':
         'Price': ['<tr><td align="right" nowrap="nowrap"><b>Price:</b></td><td align="left" nowrap="nowrap"><span class="bigred"><b>(\$\d+\.\d+)</b></span></td></tr>', False],
         'Saving': ['<tr><td align="right" nowrap="nowrap"><b>You Save:</b></td><td align="left" nowrap="nowrap"><span class="littleorange">(\$\d+,?\d+\.\d+).*</span></td></tr>', False],
         'SavingPercent': ['<tr><td align="right" nowrap="nowrap"><b>You Save:</b></td><td align="left" nowrap="nowrap"><span class="littleorange">.* \((\d+%)\)</span></td></tr>', False],
-        'Content': ['<td valign="top"><span class="normal">([\S\s]+?)</span>', False]
+        'Content': ['<td valign="top"><span class="normal">([\S\s]+?)<br>', False]
     }
     rgx1 = RegexExtractor('../input-extraction/overstock.com/jewelry01.html', multiple=overstock)
     rgx2 = RegexExtractor('../input-extraction/overstock.com/jewelry02.html', multiple=overstock)
@@ -62,7 +63,7 @@ elif algorithm == 'B':
         'Price': '//span[@class="bigred"]/b/text()',
         'Saving': '//td[@align="left"]/span[@class="littleorange"]/substring-before(text(), " (")',
         'SavingPercent': '//td[@align="left"]/span[@class="littleorange"]/substring-before(substring-after(text(), " ("), ")")',
-        'Content': ['//span[@class="normal"]/descendant-or-self::*/text()', XPathExtractor.JOIN_TWO],
+        'Content': '//span[@class="normal"]/text()',
     }
     xp1 = XPathExtractor('../input-extraction/overstock.com/jewelry01.html', multiple=overstock)
     xp2 = XPathExtractor('../input-extraction/overstock.com/jewelry02.html', multiple=overstock)
@@ -76,7 +77,7 @@ elif algorithm == 'B':
         'Title': '//h1/text()',
         'SubTitle': '//div[@class="subtitle"]/text()',
         'Lead': '//p[@class="lead"]/text()',
-        'Content': ['//div[@class="article-body"]/descendant-or-self::*/text()', XPathExtractor.JOIN_ALL]
+        'Content': ['//article/p/text()', XPathExtractor.JOIN_ALL]
     }
     xp3 = XPathExtractor('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', single=rtv)
     xp4 = XPathExtractor('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', single=rtv)

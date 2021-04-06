@@ -1,4 +1,5 @@
 from lxml import html
+import json
 
 
 f = open('input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding="utf-8")
@@ -10,7 +11,7 @@ published_time = '//div[@class="publish-meta"]/text()'
 title = '//h1/text()'
 subtitle = '//div[@class="subtitle"]/text()'
 lead = '//p[@class="lead"]/text()'
-content = '//div[@class="article-body"]/descendant-or-self::*/text()'
+content = '//article/p/text()'
 
 xp_author = tree.xpath(author)
 xp_published_time = tree.xpath(published_time)
@@ -28,4 +29,5 @@ items = {
     "Lead": xp_lead[0],
     "Content": ' '.join(tmp.split())
 }
-print(items)
+# print(items)
+print(json.dumps(items, indent=4))

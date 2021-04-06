@@ -2,14 +2,14 @@ import json
 import re
 
 
-f = open("strani/overstock.com/jewelry01.html", "r")
+f = open("input-extraction/overstock.com/jewelry01.html", "r")
 s = f.read()
 title = '<td valign="top"> \n<a href=".+"><b>(.+?)</b></a>'
 listprice = '<tr><td align="right" nowrap="nowrap"><b>List Price:</b></td><td align="left" nowrap="nowrap"><s>(\$\d+,?\d+\.\d+)</s></td></tr>'
 price = '<tr><td align="right" nowrap="nowrap"><b>Price:</b></td><td align="left" nowrap="nowrap"><span class="bigred"><b>(\$\d+\.\d+)</b></span></td></tr>'
 saving = '<tr><td align="right" nowrap="nowrap"><b>You Save:</b></td><td align="left" nowrap="nowrap"><span class="littleorange">(\$\d+,?\d+\.\d+).*</span></td></tr>'
 saving_percent = '<tr><td align="right" nowrap="nowrap"><b>You Save:</b></td><td align="left" nowrap="nowrap"><span class="littleorange">.* \((\d+%)\)</span></td></tr>'
-content = '<td valign="top"><span class="normal">([\S\s]+?)</span>'
+content = '<td valign="top"><span class="normal">([\S\s]+?)<br>'
 re_title = re.findall(title, s)
 re_list_price = re.findall(listprice, s)
 re_price = re.findall(price, s)
