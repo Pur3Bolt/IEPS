@@ -1,10 +1,10 @@
 import sys
 import json
 from regex_extractor import RegexExtractor
+from xpath_extractor import XPathExtractor
 
 
-# algorithm = sys.argv[1]
-algorithm = 'A'
+algorithm = sys.argv[1].upper()
 if algorithm == 'A':
     # Overstock
     overstock = {
@@ -55,9 +55,56 @@ if algorithm == 'A':
     print(rgx5.extract())
     print(rgx6.extract())
 elif algorithm == 'B':
-    pass
+    # Overstock
+    overstock = {
+        'Title': '//td[@valign="top"]/a/b/text()',
+        'ListPrice': '//td[@align="left"][@nowrap]/s/text()',
+        'Price': '//span[@class="bigred"]/b/text()',
+        'Saving': '//td[@align="left"]/span[@class="littleorange"]/substring-before(text(), " (")',
+        'SavingPercent': '//td[@align="left"]/span[@class="littleorange"]/substring-before(substring-after(text(), " ("), ")")',
+        'Content': ['//span[@class="normal"]/descendant-or-self::*/text()', XPathExtractor.JOIN_TWO],
+    }
+    xp1 = XPathExtractor('../input-extraction/overstock.com/jewelry01.html', multiple=overstock)
+    xp2 = XPathExtractor('../input-extraction/overstock.com/jewelry02.html', multiple=overstock)
+    print(xp1.extract())
+    print(xp2.extract())
+
+    # RTV Slo
+    rtv = {
+        'Author': '//div[@class="author-name"]/text()',
+        'PublishedTime': '//div[@class="publish-meta"]/text()',
+        'Title': '//h1/text()',
+        'SubTitle': '//div[@class="subtitle"]/text()',
+        'Lead': '//p[@class="lead"]/text()',
+        'Content': ['//div[@class="article-body"]/descendant-or-self::*/text()', XPathExtractor.JOIN_ALL]
+    }
+    xp3 = XPathExtractor('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', single=rtv)
+    xp4 = XPathExtractor('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', single=rtv)
+    print(xp3.extract())
+    print(xp4.extract())
+
+    # Steam Store
+    steam_single = {
+        'Title': ['//div[@class="details_block"]/p/descendant-or-self::text()[not(ancestor::b) and normalize-space(.) != ""]', XPathExtractor.FORCE_LXML],
+        'BundleDiscount': '//div[@class="discount_block game_purchase_discount"]/div[@class="discount_pct"]/text()',
+        'FullPrice': '//div[@class="discount_block game_purchase_discount"]/div[@class="discount_prices"]/div[@class="discount_original_price"]/text()',
+        'BundlePrice': '//div[@class="discount_block game_purchase_discount"]/div[@class="discount_prices"]/div[@class="discount_final_price"]/text()',
+        'Description': ['//*[@id="game_area_description"]/p/text()', XPathExtractor.JOIN_ALL],
+        'BundleSavings': '//div[@class="savings bundle_savings"]/text()',
+    }
+    steam_multiple = {
+        'GameTitle': '//div[@class="tab_item_name"]/text()',
+        'GameCategories': '//div[@class="tab_item_details"]/text()',
+        'GameDiscount': '//div[@class="discount_block tab_item_discount"]/div[@class="discount_pct"]/text()',
+        'GameFullPrice': '//div[@class="discount_block tab_item_discount"]/div[@class="discount_prices"]/div[@class="discount_original_price"]/text()',
+        'GameDiscountedPrice': '//div[@class="discount_block tab_item_discount"]/div[@class="discount_prices"]/div[@class="discount_final_price"]/text()',
+    }
+    xp5 = XPathExtractor('../input-extraction/store.steampowered.com/Save 37% on peperoncino Bundle on Steam.html', single=steam_single, multiple=steam_multiple, multiple_title='Games')
+    xp6 = XPathExtractor('../input-extraction/store.steampowered.com/Save 59% on Two Point Hospital_ Healthy Collection Vol. 4 on Steam.html', single=steam_single, multiple=steam_multiple, multiple_title='Games')
+    print(xp5.extract())
+    print(xp6.extract())
 elif algorithm == 'C':
     pass
 else:
     print('Invalid parameter', algorithm)
-    print('Allowed parameter: A, B or C')
+    print('Allowed: A, B or C')

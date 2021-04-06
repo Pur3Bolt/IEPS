@@ -1,8 +1,9 @@
 import json
 from lxml import html
+import elementpath
 
 
-f = open("strani/store.steampowered.com/Save 37% on peperoncino Bundle on Steam.html", "r", encoding='utf-8')
+f = open("input-extraction/store.steampowered.com/Save 37% on peperoncino Bundle on Steam.html", "r", encoding='utf-8')
 s = f.read()
 tree = html.fromstring(s)
 
