@@ -77,7 +77,7 @@ elif algorithm == 'B':
         'Title': '//h1/text()',
         'SubTitle': '//div[@class="subtitle"]/text()',
         'Lead': '//p[@class="lead"]/text()',
-        'Content': ['//article/p/text()', XPathExtractor.JOIN_ALL]
+        'Content': ['//article/p/descendant-or-self::*/text()', XPathExtractor.JOIN_ALL]
     }
     xp3 = XPathExtractor('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', single=rtv)
     xp4 = XPathExtractor('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', single=rtv)

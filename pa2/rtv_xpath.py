@@ -11,7 +11,7 @@ published_time = '//div[@class="publish-meta"]/text()'
 title = '//h1/text()'
 subtitle = '//div[@class="subtitle"]/text()'
 lead = '//p[@class="lead"]/text()'
-content = '//article/p/text()'
+content = '//article/p/descendant-or-self::*/text()'
 
 xp_author = tree.xpath(author)
 xp_published_time = tree.xpath(published_time)
