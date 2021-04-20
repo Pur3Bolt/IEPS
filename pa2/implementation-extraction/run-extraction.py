@@ -9,10 +9,10 @@ if algorithm == 'A':
     # Overstock
     overstock = {
         'Title': ['<td valign="top"> \n<a href=".+"><b>(.+?)</b></a>', False],
-        'ListPrice': ['<tr><td align="right" nowrap="nowrap"><b>List Price:</b></td><td align="left" nowrap="nowrap"><s>(\$\d+,?\d+\.\d+)</s></td></tr>', False],
-        'Price': ['<tr><td align="right" nowrap="nowrap"><b>Price:</b></td><td align="left" nowrap="nowrap"><span class="bigred"><b>(\$\d+\.\d+)</b></span></td></tr>', False],
-        'Saving': ['<tr><td align="right" nowrap="nowrap"><b>You Save:</b></td><td align="left" nowrap="nowrap"><span class="littleorange">(\$\d+,?\d+\.\d+).*</span></td></tr>', False],
-        'SavingPercent': ['<tr><td align="right" nowrap="nowrap"><b>You Save:</b></td><td align="left" nowrap="nowrap"><span class="littleorange">.* \((\d+%)\)</span></td></tr>', False],
+        'ListPrice': ['List Price:</b></td><td[^>]*><s>(\$\d+,?\d+\.\d+)</s>', False],
+        'Price': ['Price:</b></td><td[^>]*><span class="bigred"><b>(\$\d+\.\d+)</b>', False],
+        'Saving': ['You Save:</b></td><td[^>]*><span class="littleorange">(\$\d+,?\d+\.\d+)', False],
+        'SavingPercent': ['You Save:</b></td><td[^>]*><span class="littleorange">.* \((\d+%)\)</span>', False],
         'Content': ['<td valign="top"><span class="normal">([\S\s]+?)<br>', False]
     }
     rgx1 = RegexExtractor('../input-extraction/overstock.com/jewelry01.html', multiple=overstock)
@@ -37,18 +37,18 @@ if algorithm == 'A':
     # Steam Store
     steam_single = {
         'Title': ['<b>Title:</b> +(.+?) <br>', False],
-        'BundleDiscount': ['<div class="discount_block game_purchase_discount" data-price-final="\d+">.*<div class="discount_pct">(.+?)</div>', False],
-        'FullPrice': ['<div class="discount_block game_purchase_discount" data-price-final="\d+">.*<div class="discount_original_price">(.+?)</div>', False],
-        'BundlePrice': ['<div class="discount_block game_purchase_discount" data-price-final="\d+">.*<div class="discount_original_price">(.+?)</div>', False],
+        'BundleDiscount': ['<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_pct">-(.+?)</div>', False],
+        'FullPrice': ['<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_original_price">(.+?)</div>', False],
+        'BundlePrice': ['<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_final_price">(.+?)</div>', False],
         'Description': ['<h2>About this bundle</h2>[\n\t]*<p>(.+?)</p>', True],
-        'BundleSavings': ['<div id="package_savings_bar">[\n\t]*<div class="savings bundle_savings">(.+?)</div>', False]
+        'BundleSavings': ['bundle_savings">(.+?)</div>', False]
     }
     steam_multiple = {
         'GameTitle': ['<div class="tab_item_name">(.+?)</div>', False],
         'GameCategories': ['<span class="platform_img .*"></span>[\n\t]*&nbsp; (.+?)</div>', False],
-        'GameDiscount': ['<div class="discount_block tab_item_discount" data-price-final="\d+">.*<div class="discount_pct">(.+?)</div>', False],
-        'GameFullPrice': ['<div class="discount_block tab_item_discount" data-price-final="\d+">.*<div class="discount_prices"><div class="discount_original_price">(.+?)</div>', False],
-        'GameDiscountedPrice': ['<div class="discount_block tab_item_discount" data-price-final="\d+">.*<div class="discount_prices">.*<div class="discount_final_price">(.+?)</div>', False],
+        'GameDiscount': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_pct">-(.+?)</div>', False],
+        'GameFullPrice': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_prices"><div class="discount_original_price">(.+?)</div>', False],
+        'GameDiscountedPrice': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_prices">.*<div class="discount_final_price">(.+?)</div>', False],
     }
     rgx5 = RegexExtractor('../input-extraction/store.steampowered.com/Save 37% on peperoncino Bundle on Steam.html', single=steam_single, multiple=steam_multiple, multiple_title='Games')
     rgx5.extract()
@@ -94,7 +94,7 @@ elif algorithm == 'B':
         'FullPrice': '//div[@class="discount_block game_purchase_discount"]/div[@class="discount_prices"]/div[@class="discount_original_price"]/text()',
         'BundlePrice': '//div[@class="discount_block game_purchase_discount"]/div[@class="discount_prices"]/div[@class="discount_final_price"]/text()',
         'Description': ['//*[@id="game_area_description"]/p/text()', XPathExtractor.JOIN_ALL],
-        'BundleSavings': '//div[@class="savings bundle_savings"]/text()',
+        'BundleSavings': '//div[contains(@class, "bundle_savings")]/text()',
     }
     steam_multiple = {
         'GameTitle': '//div[@class="tab_item_name"]/text()',
