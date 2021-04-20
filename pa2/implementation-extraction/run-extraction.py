@@ -10,10 +10,10 @@ if algorithm == 'A':
     overstock = {
         'Title': ['<td valign="top"> \n<a href=".+"><b>(.+?)</b></a>', False],
         'ListPrice': ['List Price:</b></td><td[^>]*><s>(\$\d+,?\d+\.\d+)</s>', False],
-        'Price': ['Price:</b></td><td[^>]*><span class="bigred"><b>(\$\d+\.\d+)</b>', False],
-        'Saving': ['You Save:</b></td><td[^>]*><span class="littleorange">(\$\d+,?\d+\.\d+)', False],
-        'SavingPercent': ['You Save:</b></td><td[^>]*><span class="littleorange">.* \((\d+%)\)</span>', False],
-        'Content': ['<td valign="top"><span class="normal">([\S\s]+?)<br>', False]
+        'Price': ['Price:</b></td><td[^>]*><span[^>]*><b>(\$\d+\.\d+)</b>', False],
+        'Saving': ['You Save:</b></td><td[^>]*><span[^>]*>(\$\d+,?\d+\.\d+)', False],
+        'SavingPercent': ['You Save:</b></td><td[^>]*><span[^>]*>.* \((\d+%)\)</span>', False],
+        'Content': ['<span class="normal">([\S\s]+?)<br>', False]
     }
     rgx1 = RegexExtractor('../input-extraction/overstock.com/jewelry01.html', multiple=overstock)
     rgx2 = RegexExtractor('../input-extraction/overstock.com/jewelry02.html', multiple=overstock)

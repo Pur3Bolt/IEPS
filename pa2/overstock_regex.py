@@ -6,10 +6,10 @@ f = open("input-extraction/overstock.com/jewelry01.html", "r")
 s = f.read()
 title = '<td valign="top"> \n<a href=".+"><b>(.+?)</b></a>'
 listprice = 'List Price:</b></td><td[^>]*><s>(\$\d+,?\d+\.\d+)</s>'
-price = 'Price:</b></td><td[^>]*><span class="bigred"><b>(\$\d+\.\d+)</b>'
-saving = 'You Save:</b></td><td[^>]*><span class="littleorange">(\$\d+,?\d+\.\d+)'
-saving_percent = 'You Save:</b></td><td[^>]*><span class="littleorange">.* \((\d+%)\)</span>'
-content = '<td valign="top"><span class="normal">([\S\s]+?)<br>'
+price = 'Price:</b></td><td[^>]*><span[^>]*><b>(\$\d+\.\d+)</b>'
+saving = 'You Save:</b></td><td[^>]*><span[^>]*>(\$\d+,?\d+\.\d+)'
+saving_percent = 'You Save:</b></td><td[^>]*><span[^>]*>.* \((\d+%)\)</span>'
+content = '<span class="normal">([\S\s]+?)<br>'
 re_title = re.findall(title, s)
 re_list_price = re.findall(listprice, s)
 re_price = re.findall(price, s)
