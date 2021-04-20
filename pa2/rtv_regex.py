@@ -8,7 +8,7 @@ published_time = '<div class="publish-meta">[\n\t]*(.+?)<br>'
 title = '<h1>(.+?)</h1>'
 subtitle = '<div class="subtitle">(.+?)</div>'
 lead = '<p class="lead">(.+?)</p>'
-content = '<article class="article">.*?</figure>(.+?)</article>'
+content = '<article[^>]*>.*?</figure>(.+?)</article>'
 re_author = re.findall(author, s)
 re_published_time = re.findall(published_time, s)
 re_title = re.findall(title, s)

@@ -27,7 +27,7 @@ if algorithm == 'A':
         'Title': ['<h1>(.+?)</h1>', False],
         'SubTitle': ['<div class="subtitle">(.+?)</div>', False],
         'Lead': ['<p class="lead">(.+?)</p>', False],
-        'Content': ['<article class="article">.*?</figure>(.+?)</article>', True]
+        'Content': ['<article[^>]*>.*?</figure>(.+?)</article>', True]
     }
     rgx3 = RegexExtractor('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', single=rtv, cleanup_content=True)
     rgx4 = RegexExtractor('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', single=rtv, cleanup_content=True)
@@ -45,10 +45,10 @@ if algorithm == 'A':
     }
     steam_multiple = {
         'GameTitle': ['<div class="tab_item_name">(.+?)</div>', False],
-        'GameCategories': ['<span class="platform_img .*"></span>[\n\t]*&nbsp; (.+?)</div>', False],
+        'GameCategories': ['<span class="platform_img.*"></span>[\n\t]*&nbsp; (.+?)</div>', False],
         'GameDiscount': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_pct">(.+?)</div>', False],
-        'GameFullPrice': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_prices"><div class="discount_original_price">(.+?)</div>', False],
-        'GameDiscountedPrice': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_prices">.*<div class="discount_final_price">(.+?)</div>', False],
+        'GameFullPrice': ['<div class=".*tab_item_discount"[^>]*>.*<div[^>]*><div class="discount_original_price">(.+?)</div>', False],
+        'GameDiscountedPrice': ['<div class=".*tab_item_discount"[^>]*>.*<div[^>]*>.*<div class="discount_final_price">(.+?)</div>', False],
     }
     rgx5 = RegexExtractor('../input-extraction/store.steampowered.com/Save 37% on peperoncino Bundle on Steam.html', single=steam_single, multiple=steam_multiple, multiple_title='Games')
     rgx5.extract()
@@ -99,9 +99,9 @@ elif algorithm == 'B':
     steam_multiple = {
         'GameTitle': '//div[@class="tab_item_name"]/text()',
         'GameCategories': '//div[@class="tab_item_details"]/text()',
-        'GameDiscount': '//div[@class="discount_block tab_item_discount"]/div[@class="discount_pct"]/text()',
-        'GameFullPrice': '//div[@class="discount_block tab_item_discount"]/div[@class="discount_prices"]/div[@class="discount_original_price"]/text()',
-        'GameDiscountedPrice': '//div[@class="discount_block tab_item_discount"]/div[@class="discount_prices"]/div[@class="discount_final_price"]/text()',
+        'GameDiscount': '//div[contains(@class, "tab_item_discount")]/div[@class="discount_pct"]/text()',
+        'GameFullPrice': '//div[contains(@class, "tab_item_discount")]/div/div[@class="discount_original_price"]/text()',
+        'GameDiscountedPrice': '//div[contains(@class, "tab_item_discount")]/div/div[@class="discount_final_price"]/text()',
     }
     xp5 = XPathExtractor('../input-extraction/store.steampowered.com/Save 37% on peperoncino Bundle on Steam.html', single=steam_single, multiple=steam_multiple, multiple_title='Games')
     xp6 = XPathExtractor('../input-extraction/store.steampowered.com/Save 59% on Two Point Hospital_ Healthy Collection Vol. 4 on Steam.html', single=steam_single, multiple=steam_multiple, multiple_title='Games')
