@@ -18,13 +18,8 @@ re_content = re.findall(content, s, re.DOTALL)
 re_content = re.sub('<iframe[^>]*>.*?</iframe>', '', re_content[0])
 re_content = re.sub('<figure[^>]*>.*?</figure>', '', re_content, flags=re.DOTALL)
 re_content = re.sub('<div class="gallery">.*</div>', '', re_content, flags=re.DOTALL)
-re_content = re.sub('<p[^>]*>', '', re_content)
-re_content = re.sub('</p>', '\n', re_content)
-re_content = re.sub('<strong>', '', re_content)
-re_content = re.sub('</strong>', '', re_content)
-re_content = re.sub('<br>', '\n', re_content)
-re_content = re.sub('<sub>', '', re_content)
-re_content = re.sub('</sub>', '', re_content)
+re_content = re.sub('<p[^>]*>|<strong>|</strong>|<sub>|</sub>', '', re_content)
+re_content = re.sub('</p>|<br>', '\n', re_content)
 items = {
     'Author': re_author[0],
     'PublishedTime': re_published_time[0],
@@ -33,4 +28,5 @@ items = {
     'Lead': re_lead[0],
     'Content': re_content.strip()
 }
-print(items)
+#print(items)
+print(re_content.strip())
