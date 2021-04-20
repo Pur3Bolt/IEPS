@@ -2,12 +2,17 @@ import re
 
 
 class RegexExtractor:
-    def __init__(self, file_name: str, single: dict = None, multiple: dict = None, multiple_title: str = None) -> None:
+    def __init__(self,
+                 file_name: str,
+                 single: dict = None,
+                 multiple: dict = None,
+                 multiple_title: str = None,
+                 cleanup_content: bool = False) -> None:
         try:
-            f = open(file_name, 'r')
+            f = open(file_name, 'r', encoding='utf-8')
             self.contents = f.read()
         except UnicodeDecodeError:
-            f = open(file_name, 'r', encoding='utf-8')
+            f = open(file_name, 'r')
             self.contents = f.read()
 
         # stores a dict where keys are data items;
@@ -18,6 +23,7 @@ class RegexExtractor:
         # values are arrays [regex, bool] where bool determines if re.DOTALL is used
         self.multiple = multiple
         self.extracted = {}  # stores the extracted values
+        self.cleanup_content = cleanup_content
 
     def find(self, needle: str, dot: bool) -> list:
         """
@@ -29,6 +35,30 @@ class RegexExtractor:
         if dot:
             return re.findall(needle, self.contents, re.DOTALL)
         return re.findall(needle, self.contents)
+
+    def content_cleanup(self) -> None:
+        """
+        Cleanup the Content item in the extracted data and update it in the dict.
+        """
+        re_content = re.sub('<iframe[^>]*>.*?</iframe>', '', self.extracted['Content'])
+        re_content = re.sub('<figure[^>]*>.*?</figure>', '', re_content, flags=re.DOTALL)
+        re_content = re.sub('<div class="gallery">.*</div>', '', re_content, flags=re.DOTALL)
+        re_content = re.sub('<p[^>]*>', '', re_content)
+        re_content = re.sub('</p>', '\n', re_content)
+        re_content = re.sub('<strong>', '', re_content)
+        re_content = re.sub('</strong>', '', re_content)
+        # re_content = re.sub('<br>', '\n', re_content)
+        re_content = re.sub('<sub>', '', re_content)
+        re_content = re.sub('</sub>', '', re_content)
+        self.extracted['Content'] = re_content.strip()
+        self.replace_br('Content')
+
+    def replace_br(self, dict_item: str) -> None:
+        """
+        Replaces <br> tags with \n from an item in the extracted data.
+        :param dict_item: The key of the field in the extracted data in which to perform replacements
+        """
+        self.extracted[dict_item] = re.sub('<br/?>', '\n', self.extracted[dict_item])
 
     def extract(self) -> dict:
         """
@@ -64,4 +94,6 @@ class RegexExtractor:
                     self.extracted['Items'] = multiple_extracted
                 else:
                     self.extracted[self.multiple_title] = multiple_extracted
+            if self.cleanup_content:
+                self.content_cleanup()
         return self.extracted

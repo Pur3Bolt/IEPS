@@ -28,10 +28,10 @@ if algorithm == 'A':
         'Title': ['<h1>(.+?)</h1>', False],
         'SubTitle': ['<div class="subtitle">(.+?)</div>', False],
         'Lead': ['<p class="lead">(.+?)</p>', False],
-        'Content': ['<div class="article-body">(.+?)</div>[\n\t]*<div class="article-column">', True]
+        'Content': ['<article class="article">.*?</figure>(.+?)</article>', True]
     }
-    rgx3 = RegexExtractor('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', single=rtv)
-    rgx4 = RegexExtractor('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', single=rtv)
+    rgx3 = RegexExtractor('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', single=rtv, cleanup_content=True)
+    rgx4 = RegexExtractor('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', single=rtv, cleanup_content=True)
     print(rgx3.extract())
     print(rgx4.extract())
 
@@ -52,7 +52,11 @@ if algorithm == 'A':
         'GameDiscountedPrice': ['<div class="discount_block tab_item_discount" data-price-final="\d+">.*<div class="discount_prices">.*<div class="discount_final_price">(.+?)</div>', False],
     }
     rgx5 = RegexExtractor('../input-extraction/store.steampowered.com/Save 37% on peperoncino Bundle on Steam.html', single=steam_single, multiple=steam_multiple, multiple_title='Games')
+    rgx5.extract()
+    rgx5.replace_br('Description')
     rgx6 = RegexExtractor('../input-extraction/store.steampowered.com/Save 59% on Two Point Hospital_ Healthy Collection Vol. 4 on Steam.html', single=steam_single, multiple=steam_multiple, multiple_title='Games')
+    rgx6.extract()
+    rgx6.replace_br('Description')
     print(rgx5.extract())
     print(rgx6.extract())
 elif algorithm == 'B':
