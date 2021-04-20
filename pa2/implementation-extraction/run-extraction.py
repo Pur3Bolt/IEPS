@@ -1,11 +1,10 @@
 import sys
-import json
 from regex_extractor import RegexExtractor
 from xpath_extractor import XPathExtractor
+# import json
 
 
-# algorithm = sys.argv[1].upper()
-algorithm = 'A'
+algorithm = sys.argv[1].upper()
 if algorithm == 'A':
     # Overstock
     overstock = {
