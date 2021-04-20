@@ -9,8 +9,8 @@ if algorithm == 'A':
     # Overstock
     overstock = {
         'Title': ['<td valign="top"> \n<a href=".+"><b>(.+?)</b></a>', False],
-        'ListPrice': ['List Price:</b></td><td[^>]*><s>(\$\d+,?\d+\.\d+)</s>', False],
-        'Price': ['Price:</b></td><td[^>]*><span[^>]*><b>(\$\d+\.\d+)</b>', False],
+        'ListPrice': ['<td[^>]*><s>(\$\d+,?\d+\.\d+)</s>', False],
+        'Price': ['<span class="bigred"><b>(\$\d+\.\d+)</b>', False],
         'Saving': ['You Save:</b></td><td[^>]*><span[^>]*>(\$\d+,?\d+\.\d+)', False],
         'SavingPercent': ['You Save:</b></td><td[^>]*><span[^>]*>.* \((\d+%)\)</span>', False],
         'Content': ['<span class="normal">([\S\s]+?)<br>', False]
@@ -37,7 +37,7 @@ if algorithm == 'A':
     # Steam Store
     steam_single = {
         'Title': ['<b>Title:</b> +(.+?) <br>', False],
-        'BundleDiscount': ['<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_pct">-(.+?)</div>', False],
+        'BundleDiscount': ['<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_pct">(.+?)</div>', False],
         'FullPrice': ['<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_original_price">(.+?)</div>', False],
         'BundlePrice': ['<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_final_price">(.+?)</div>', False],
         'Description': ['<h2>About this bundle</h2>[\n\t]*<p>(.+?)</p>', True],
@@ -46,7 +46,7 @@ if algorithm == 'A':
     steam_multiple = {
         'GameTitle': ['<div class="tab_item_name">(.+?)</div>', False],
         'GameCategories': ['<span class="platform_img .*"></span>[\n\t]*&nbsp; (.+?)</div>', False],
-        'GameDiscount': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_pct">-(.+?)</div>', False],
+        'GameDiscount': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_pct">(.+?)</div>', False],
         'GameFullPrice': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_prices"><div class="discount_original_price">(.+?)</div>', False],
         'GameDiscountedPrice': ['<div class=".*tab_item_discount"[^>]*>.*<div class="discount_prices">.*<div class="discount_final_price">(.+?)</div>', False],
     }
@@ -62,7 +62,7 @@ elif algorithm == 'B':
     # Overstock
     overstock = {
         'Title': '//td[@valign="top"]/a/b/text()',
-        'ListPrice': '//td[@align="left"][@nowrap]/s/text()',
+        'ListPrice': '//td/s/text()',
         'Price': '//span[@class="bigred"]/b/text()',
         'Saving': '//td[@align="left"]/span[@class="littleorange"]/substring-before(text(), " (")',
         'SavingPercent': '//td[@align="left"]/span[@class="littleorange"]/substring-before(substring-after(text(), " ("), ")")',
@@ -90,9 +90,9 @@ elif algorithm == 'B':
     # Steam Store
     steam_single = {
         'Title': ['//div[@class="details_block"]/p/descendant-or-self::text()[not(ancestor::b) and normalize-space(.) != ""]', XPathExtractor.FORCE_LXML],
-        'BundleDiscount': '//div[@class="discount_block game_purchase_discount"]/div[@class="discount_pct"]/text()',
-        'FullPrice': '//div[@class="discount_block game_purchase_discount"]/div[@class="discount_prices"]/div[@class="discount_original_price"]/text()',
-        'BundlePrice': '//div[@class="discount_block game_purchase_discount"]/div[@class="discount_prices"]/div[@class="discount_final_price"]/text()',
+        'BundleDiscount': '//div[contains(@class, "game_purchase_discount")]/div[@class="discount_pct"]/text()',
+        'FullPrice': '//div[contains(@class, "game_purchase_discount")]/div/div[@class="discount_original_price"]/text()',
+        'BundlePrice': '//div[contains(@class, "game_purchase_discount")]/div/div[@class="discount_final_price"]/text()',
         'Description': ['//*[@id="game_area_description"]/p/text()', XPathExtractor.JOIN_ALL],
         'BundleSavings': '//div[contains(@class, "bundle_savings")]/text()',
     }

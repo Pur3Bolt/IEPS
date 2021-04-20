@@ -5,14 +5,14 @@ import re
 f = open("input-extraction/store.steampowered.com/Save 59% on Two Point Hospital_ Healthy Collection Vol. 4 on Steam.html", "r", encoding='utf-8')
 s = f.read()
 bundle_title = '<b>Title:</b> +(.+?) <br>'
-bundle_discount = '<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_pct">-(.+?)</div>'
+bundle_discount = '<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_pct">(.+?)</div>'
 full_price = '<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_original_price">(.+?)</div>'
 bundle_price = '<div class=".*game_purchase_discount"[^>]*>.*<div class="discount_final_price">(.+?)</div>'
 description = '<h2>About this bundle</h2>[\n\t]*<p>(.+?)</p>'  # single line
 bundle_savings = 'bundle_savings">(.+?)</div>'
 game_title = '<div class="tab_item_name">(.+?)</div>'
 game_categories = '<span class="platform_img .*"></span>[\n\t]*&nbsp; (.+?)</div>'
-game_discount = '<div class=".*tab_item_discount"[^>]*>.*<div class="discount_pct">-(.+?)</div>'
+game_discount = '<div class=".*tab_item_discount"[^>]*>.*<div class="discount_pct">(.+?)</div>'
 game_full_price = '<div class=".*tab_item_discount"[^>]*>.*<div class="discount_prices"><div class="discount_original_price">(.+?)</div>'
 game_discounted_price = '<div class=".*tab_item_discount"[^>]*>.*<div class="discount_prices">.*<div class="discount_final_price">(.+?)</div>'
 
