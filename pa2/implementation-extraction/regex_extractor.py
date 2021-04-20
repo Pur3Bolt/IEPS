@@ -43,15 +43,9 @@ class RegexExtractor:
         re_content = re.sub('<iframe[^>]*>.*?</iframe>', '', self.extracted['Content'])
         re_content = re.sub('<figure[^>]*>.*?</figure>', '', re_content, flags=re.DOTALL)
         re_content = re.sub('<div class="gallery">.*</div>', '', re_content, flags=re.DOTALL)
-        re_content = re.sub('<p[^>]*>', '', re_content)
-        re_content = re.sub('</p>', '\n', re_content)
-        re_content = re.sub('<strong>', '', re_content)
-        re_content = re.sub('</strong>', '', re_content)
-        # re_content = re.sub('<br>', '\n', re_content)
-        re_content = re.sub('<sub>', '', re_content)
-        re_content = re.sub('</sub>', '', re_content)
+        re_content = re.sub('<p[^>]*>|<strong>|</strong>|<sub>|</sub>', '', re_content)
+        re_content = re.sub('</p>|<br/?>', '\n', re_content)
         self.extracted['Content'] = re_content.strip()
-        self.replace_br('Content')
 
     def replace_br(self, dict_item: str) -> None:
         """
