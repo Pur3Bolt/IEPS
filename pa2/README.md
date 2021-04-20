@@ -13,8 +13,11 @@ Skripta se nahaja v mapi `implementation-extraction`, zaženemo pa jo z ukazom `
 #### Spletne strani za izvajanje ekstrakcije (`A` in `B`)
 V mapi `input-extraction` se nahajajo 3 podmape v katerih je vsebina spletnih strani, ki se uporabljajo v algoritmih `A` in `B`:
 * `rtvslo.si`: Članek. Ekstrahirali smo podatke, ki so označeni na spodnji sliki (pri temu nismo zajemali slik ipd.).
+
 ![RTV Slo podatki za ekstrakcijo](https://szitnik.github.io/wier-labs/img/pa2/rtvslo.png)
 * `overstock.com`: Seznam prodajanih artiklov. Ekstrahirali smo individualne artikle, kot označeno na spodnji sliki.
+
 ![Overstock podatki za ekstrakcijo](https://szitnik.github.io/wier-labs/img/pa2/overstock.png)
 * `store.steampowered.com`: Seznam iger, ki so združene v paketu. Ekstrahirali smo nekaj podatkov o paketu, kot tudi vse elemente, ki so v njem.
+
 ![Steam Store podatki za ekstrakcijo](./input-extraction/store.steampowered.com/Opisi.png)
