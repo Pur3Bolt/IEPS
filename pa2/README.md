@@ -1,6 +1,6 @@
 # IEPS 2. naloga
 
-V tej nalogi smo izdelali skripto, ki iz vnaprej izbranih spletnih strani izvede ekstrakcijo podatkov s pomočjo regularnih izrazov ter XPath izrazov, ter omogoča izdelavo ovojnice za samodejno ekstrakcijo podatkov.
+V tej nalogi smo izdelali skripto, ki iz vnaprej izbranih spletnih strani izvede ekstrakcijo podatkov s pomočjo regularnih izrazov ter XPath izrazov.
 
 ## Poganjanje skripte
 
