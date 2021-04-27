@@ -4,7 +4,12 @@ V tej nalogi smo izdelali skripto, ki iz vnaprej izbranih spletnih strani izvede
 
 ## Poganjanje skripte
 
+### Predpogoji
 Naša implementacija zahteva, da imamo nameščeni knjižnici `lxml` in `elementpath`.
+Za namestitev zgoraj omenjenih knjižnic, uporabimo spodnji ukaz:
+* `pip install lxml elementpath`
+
+
 Skripta se nahaja v mapi `implementation-extraction`, zaženemo pa jo z ukazom `python run-extraction.py ALGORITHM`, kjer vrednost `ALGORITHM` lahko zavzame eno izmed sledečih vrednosti:
 * `A` za izvajanje ekstrakcije podatkov z uporabo regularnih izrazov,
 * `B` za izvajanje ekstrakcije podatkov z uporabo XPath izrazov.
