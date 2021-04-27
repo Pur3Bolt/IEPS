@@ -7,8 +7,7 @@ V tej nalogi smo izdelali skripto, ki iz vnaprej izbranih spletnih strani izvede
 Naša implementacija zahteva, da imamo nameščeni knjižnici `lxml` in `elementpath`.
 Skripta se nahaja v mapi `implementation-extraction`, zaženemo pa jo z ukazom `python run-extraction.py ALGORITHM`, kjer vrednost `ALGORITHM` lahko zavzame eno izmed sledečih vrednosti:
 * `A` za izvajanje ekstrakcije podatkov z uporabo regularnih izrazov,
-* `B` za izvajanje ekstrakcije podatkov z uporabo XPath izrazov,
-* `C` za izdelavo ovojnice za samodejno ekstrakcijo podatkov.
+* `B` za izvajanje ekstrakcije podatkov z uporabo XPath izrazov.
 
 #### Spletne strani za izvajanje ekstrakcije (`A` in `B`)
 V mapi `input-extraction` se nahajajo 3 podmape v katerih je vsebina spletnih strani, ki se uporabljajo v algoritmih `A` in `B`:
