@@ -133,14 +133,25 @@ class SQLiteSearch:
             pages.append(page_file)
             frequencies.append(frequency)
             document = self.get_document(page_file)
-            text = BeautifulSoup(document, features="html.parser").get_text()
+            soup = BeautifulSoup(document, features="html.parser")
+            for script in soup(["script", "style"]):
+                script.decompose()
+
+            strips = list(soup.stripped_strings)
+            text = ' '.join(strips)
             tokens = nltk.word_tokenize(text, language='Slovene', preserve_line=False)
             # TEMP
             word_tokens = []
             for i in range(len(tokens)):
                 w = tokens[i].lower()
-                if len(w) == 1 and not re.match("^[A-Za-z0-9]*$", w):
+                if len(w) == 1 and not re.match("^[A-Ža-ž0-9]*$", w):
                     continue
+                if len(w) >= 2 and not re.match("^[A-Ža-ž0-9]*$", w[-1]): # Dodal Andrej Od
+                    w = w[:-1]
+                if len(w) >= 2 and not re.match("^[A-Ža-ž0-9]*$", w[0]):
+                    w = w[1:]
+                if not re.search('[a-žA-ž]', w):
+                    continue                                                # Dodal Andrej Do tle
                 if w not in self.stop_words_slovene:
                     word_tokens.append(w)
             # TEMP
@@ -149,7 +160,8 @@ class SQLiteSearch:
 
 
 sqlite_search = SQLiteSearch()
-sqlite_search.search(sys.argv[1:])
+#sqlite_search.search(sys.argv[1:])
+sqlite_search.search(['sistem', 'spot'])
 
 
 
