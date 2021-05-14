@@ -101,14 +101,14 @@ class DataProcessing:
             new_index_words = set()
             for i in range(len(tokens)):
                 a1 = tokens[i].lower().replace("'", "").replace("'", '')
+                if not re.search('[a-žA-ž]', a1):
+                    continue
                 if len(a1) == 1 and not re.match("^[A-Ža-ž0-9]*$", a1):
                     continue
                 if len(a1) >= 2 and not re.match("^[A-Ža-ž0-9]*$", a1[-1]):
                     a1 = a1[:-1]
                 if len(a1) >= 2 and not re.match("^[A-Ža-ž0-9]*$", a1[0]):
                     a1 = a1[1:]
-                if not re.search('[a-žA-ž]', a1):
-                    continue
                 if a1 not in self.stop_words_slovene:
                     index_words_with_index.append((a1, i))
                     if a1 not in global_index_words:

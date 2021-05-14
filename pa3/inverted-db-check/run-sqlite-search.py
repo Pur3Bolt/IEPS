@@ -144,14 +144,14 @@ class SQLiteSearch:
             word_tokens = []
             for i in range(len(tokens)):
                 w = tokens[i].lower()
+                if not re.search('[a-žA-ž]', w):
+                    continue
                 if len(w) == 1 and not re.match("^[A-Ža-ž0-9]*$", w):
                     continue
                 if len(w) >= 2 and not re.match("^[A-Ža-ž0-9]*$", w[-1]): # Dodal Andrej Od
                     w = w[:-1]
                 if len(w) >= 2 and not re.match("^[A-Ža-ž0-9]*$", w[0]):
-                    w = w[1:]
-                if not re.search('[a-žA-ž]', w):
-                    continue                                                # Dodal Andrej Do tle
+                    w = w[1:]                                              # Dodal Andrej Do tle
                 if w not in self.stop_words_slovene:
                     word_tokens.append(w)
             # TEMP
