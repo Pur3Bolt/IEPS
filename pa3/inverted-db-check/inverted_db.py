@@ -90,13 +90,20 @@ class DataProcessing:
             file_name = ntpath.split(file)[1]
             print("Working with file: ", file_name)
             f = codecs.open(file, 'r', 'utf-8')
-            document = BeautifulSoup(f.read(), features="html.parser").get_text()
+            soup = BeautifulSoup(f.read(), features="html.parser")
+            for script in soup(["script", "style"]):
+                script.decompose()
+
+            strips = list(soup.stripped_strings)
+            document = ' '.join(strips)
             tokens = word_tokenize(document, language='Slovene', preserve_line=False)
             index_words_with_index = []
             new_index_words = set()
             for i in range(len(tokens)):
-                a1 = tokens[i].lower()
-                if len(a1) == 1 and not re.match("^[A-Za-z0-9]*$", a1): # Tle odstranim vse znake ki niso besede ali stevilke
+                a1 = tokens[i].lower().replace("'", "").replace("'", '')
+                if len(a1) == 1 and not re.match("^[A-Za-z0-9]*$", a1):
+                    continue
+                if not re.search('[a-zA-Z]', a1):
                     continue
                 if a1 not in self.stop_words_slovene:
                     index_words_with_index.append((a1, i))
@@ -115,7 +122,7 @@ class DataProcessing:
             if len(new_index_words) > 0:
                 insert_word_string = """INSERT INTO IndexWord VALUES """
                 for word in new_index_words:
-                    insert_word_string += "('" + word.replace("'", "\"") + "'),"
+                    insert_word_string += "('" + word + "'),"
                 insert_word_string = insert_word_string[:-1] + ";"
                 try:
                     c.execute(insert_word_string)
@@ -124,6 +131,8 @@ class DataProcessing:
                     conn.commit()
                 except:
                     failword += 1
+                    print(new_index_words)
+                    print(insert_word_string)
                     print("New index words insert failed")
 
             # Inserting postings
@@ -132,7 +141,7 @@ class DataProcessing:
                 positions = index_words_dict[key]
                 pos = ",".join([str(item) for item in positions])
                 count = len(positions)
-                insert_posting_string += "('"+key.replace("'", "\"") +  "', '" +file_name+"'," + str(count) + ", '" + pos + "'),"
+                insert_posting_string += "('"+key.replace("'", "").replace("'",'') +  "', '" +file_name+"'," + str(count) + ", '" + pos + "'),"
 
             insert_posting_string = insert_posting_string[:-1] + ";"
             try:
@@ -142,6 +151,7 @@ class DataProcessing:
                 conn.commit()
             except:
                 failpos+= 1
+                print(insert_posting_string)
                 print("New Posting insert failed")
 
 
