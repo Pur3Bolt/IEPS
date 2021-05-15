@@ -1,5 +1,6 @@
 import re
 import os
+import sys
 import time
 from bs4 import BeautifulSoup
 
@@ -202,7 +203,7 @@ class BasicSearch:
 
 
 basic_search = BasicSearch()
-# sqlite_search.search(sys.argv[1:])
-basic_search.search('predelovalne dejavnosti'.split())
-basic_search.search('trgovina'.split())
-basic_search.search('social services'.split())
+basic_search.search([x.lower() for x in sys.argv[1:]])
+# basic_search.search('predelovalne dejavnosti'.split())
+# basic_search.search('trgovina'.split())
+# basic_search.search('social services'.split())
