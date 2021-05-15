@@ -4,3 +4,4 @@ pa1/crawler/chromedriver.exe
 pa1/database/__pycache__/
 *.pyc
 pa1/docker/pgdata/
+pa3/pages
