@@ -110,8 +110,8 @@ class BasicSearch:
         :param results: A list of lists containing the results in format [frequencies, document, snippets].
         The list should be ordered in descending order.
         """
-        print(f'Results for a query: "{" ".join(query)}"')
-        print('Results found in {:.0f}s'.format(self.time_needed_to_search))
+        print(f'Results for query: "{" ".join(query)}"')
+        print('{} results found in {:.0f}s'.format(len(results), self.time_needed_to_search))
         print("{:<12} {:<40} {}".format('Frequencies', 'Document', 'Snippets'))
         print("{} {} {}".format('-' * 12, '-' * 40, '-' * 80))
         for i in range(min(self.results_limit, len(results))):
@@ -203,6 +203,6 @@ class BasicSearch:
 
 basic_search = BasicSearch()
 # sqlite_search.search(sys.argv[1:])
-# basic_search.search('predelovalne dejavnosti'.split())
-# basic_search.search('trgovina'.split())
+basic_search.search('predelovalne dejavnosti'.split())
+basic_search.search('trgovina'.split())
 basic_search.search('social services'.split())
