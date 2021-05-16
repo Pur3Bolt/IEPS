@@ -20,3 +20,9 @@ Podatkovna baza za iskanje je že ustvarjena in se nahaja v datoteki `inverted-i
 Iskanje s pomočjo invertnega indeksa izvedemo z ukazom `python run-sqlite-search.py POIZVEDBA` (poizvedbo navedemo brez navednic, posamezne iskane besede naj bodo ločene s presledkom, npr. `python run-sqlite-search.py predelovalne dejavnosti`). Skripta meri čas potreben za iskanje v sami bazi (kar se tudi izpiše ob prikazu rezultatov), vendar do izpisa na zaslon pride šele, ko so izdelani vsi izseki rezultatov (*snippets*).
 
 Iskanje brez invertnega indeksa poženemo z ukazom `python run-basic-search.py POIZVEDBA` (poizvedbo navedemo na enak način, kot pri iskanju z indeksom). Skripta meri celoten čas izvajanja.
+
+Obe skripti bosta po privzetem izdelali izseke rezultatov tako, da prikažeta +/-3 besede okoli najdene besede ter 10 datotek z najvišjim številom zadetkov. Te vrednosti lahko spremenimo v `__init__` funkciji posamezne skripte:
+```python
+take_words = 3  # stevilo besed v izseku okoli najdene besede
+results_limit = 10  # stevilo rezultatov ob koncu izvajanja
+```
