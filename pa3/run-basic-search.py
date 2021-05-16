@@ -204,6 +204,3 @@ class BasicSearch:
 
 basic_search = BasicSearch()
 basic_search.search([x.lower() for x in sys.argv[1:]])
-# basic_search.search('predelovalne dejavnosti'.split())
-# basic_search.search('trgovina'.split())
-# basic_search.search('social services'.split())
