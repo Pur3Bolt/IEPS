@@ -70,7 +70,7 @@ class BasicSearch:
              "zelo", "zunaj", "č", "če", "često", "četrta", "četrtek", "četrti", "četrto", "čez", "čigav", "š", "šest",
              "šesta", "šesti", "šesto", "štiri", "ž", "že", "svoj", "jesti", "imeti", "\u0161e", "iti", "kak", "www",
              "km", "eur", "pač", "del", "kljub", "šele", "prek", "preko", "znova", "morda", "kateri", "katero",
-             "katera", "ampak", "lahek", "lahka", "lahko", "morati", "torej"})
+             "katera", "ampak", "lahek", "lahka", "lahko", "morati", "torej", "gl", "xsd", "ipd", "om", "gt","lt", "d.o.o"})
 
     def print_results(self, query: list, results: list) -> None:
         """
