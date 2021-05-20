@@ -8,11 +8,12 @@ import ntpath
 from nltk.corpus import stopwords
 from nltk import word_tokenize
 import codecs
+from snippet import Snippet
 
 
 class BasicSearch:
 
-    def __init__(self, take_words: int = 3, results_limit: int = 10, data_dir: str = 'pages') -> None:
+    def __init__(self, snippet_limit=3, char_limit=100, take_words: int = 3, results_limit: int = 10, data_dir: str = 'pages') -> None:
         """
         This class is used for basic, no SQL searching.
 
@@ -25,8 +26,11 @@ class BasicSearch:
         self.time_needed_to_search = None
         self.take_words = take_words
         self.results_limit = results_limit
+        self.char_limit = char_limit
         self.data_dir = os.path.join(os.getcwd(), data_dir)
         self.path = data_dir
+        self.snippet_limit = snippet_limit
+        self.snip = Snippet(self.take_words, self.results_limit)
 
         self.stop_words_slovene = set(stopwords.words("Slovene")).union(
             {"ter", "nov", "novo", "nova", "zato", "še", "zaradi", "a", "ali", "april", "avgust", "b", "bi", "bil",
@@ -69,40 +73,6 @@ class BasicSearch:
              "km", "eur", "pač", "del", "kljub", "šele", "prek", "preko", "znova", "morda", "kateri", "katero",
              "katera", "ampak", "lahek", "lahka", "lahko", "morati", "torej"})
 
-    def get_snip(self, tokens: list, indices: list) -> list:
-        """
-        Creates results snippets using the token and index lists.
-
-        :param tokens: A list containing all tokens (words) from the HTML website.
-        :param indices: A list containing indices of words that are being searched for.
-        :return: A list of snippets
-        """
-        assert len(indices) >= 1
-        snippets = []
-        i = 0
-        if len(indices) > 1:
-            while i < len(indices)-1:
-                index = indices[i]
-                start = index - self.take_words if index - self.take_words >= 0 else 0
-                # if the next found token is less than take_words indexes away, we extend the length of this snippet
-                while i+1 < len(indices) and indices[i+1] <= index + self.take_words * 2:
-                    i += 1
-                    index = indices[i]
-                end = index + self.take_words + 1 if index + self.take_words + 1 < len(tokens) else len(tokens) - 1
-                snippets.append(' '.join(tokens[start:end]))
-                i += 1
-            if indices[-1] > indices[-2] + self.take_words:
-                index = indices[-1]
-                start = index - self.take_words if index - self.take_words >= 0 else 0
-                end = index + self.take_words + 1 if index + self.take_words + 1 < len(tokens) else len(tokens) - 1
-                snippets.append(' '.join(tokens[start:end]))
-        else:
-            index = indices[0]
-            start = index - self.take_words if index - self.take_words >= 0 else 0
-            end = index + self.take_words + 1 if index + self.take_words + 1 < len(tokens) else len(tokens) - 1
-            snippets.append(' '.join(tokens[start:end]))
-        return snippets
-
     def print_results(self, query: list, results: list) -> None:
         """
         Prints the results of the query to the std output
@@ -116,7 +86,9 @@ class BasicSearch:
         print("{:<12} {:<40} {}".format('Frequencies', 'Document', 'Snippets'))
         print("{} {} {}".format('-' * 12, '-' * 40, '-' * 80))
         for i in range(min(self.results_limit, len(results))):
-            print("{:<12} {:<40} {}".format(results[i][0], results[i][1], '... '+' ... '.join(results[i][2])+' ...'))
+            print("{:<12} {:<40} {}".format(results[i][0],
+                                            results[i][1],
+                                            '... ' + ' ... '.join(results[i][2][:self.snippet_limit]) + ' ...'))
 
     def get_files(self) -> list:
         """
@@ -177,7 +149,8 @@ class BasicSearch:
                 if token in search_words:
                     indexes.append(i)
         try:
-            snippet = self.get_snip(tokens, indexes)
+            # snippet = self.get_snip(tokens, indexes)
+            snippet = self.snip.get_snip(tokens, indexes)
         except AssertionError:
             snippet = []
         return len(indexes), snippet

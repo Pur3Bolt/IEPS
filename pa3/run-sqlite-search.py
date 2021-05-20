@@ -5,18 +5,20 @@ import time
 import nltk
 import sys
 from bs4 import BeautifulSoup
+from snippet import Snippet
 
 
 class SQLiteSearch:
 
-    def __init__(self, char_limit=100, take_words=3, results_limit=10, db_name='inverted-index.db', data_dir='pages'):
+    def __init__(self, snippet_limit=3, take_words=3, results_limit=10, db_name='inverted-index.db', data_dir='pages'):
         self.time_needed_to_search = None
         self.db_name = db_name
         self.take_words = take_words
-        self.char_limit = char_limit
+        self.snippet_limit = snippet_limit
         self.results_limit = results_limit
         self.data_dir = os.path.join(os.getcwd(), data_dir)
         self.all_results = None
+        self.snip = Snippet(self.take_words, self.results_limit)
 
         self.stop_words_slovene = set(nltk.corpus.stopwords.words("Slovene")).union(
             {"ter", "nov", "novo", "nova", "zato", "še", "zaradi", "a", "ali", "april", "avgust", "b", "bi", "bil",
@@ -79,21 +81,15 @@ class SQLiteSearch:
         if len(results):
             return [[result[0], result[1], [int(i) for i in result[2].split(',')]] for result in results]
 
-    def get_snip(self, tokens, indices):
-        snippets = []
-        for index in indices:
-            start = index - self.take_words if index - self.take_words >= 0 else 0
-            end = index + self.take_words + 1 if index + self.take_words + 1 < len(tokens) else len(tokens) - 1
-            snippets.append(' '.join(tokens[start:end]))
-        return snippets
-
     def print_results(self, query, frequencies, pages, snippets):
         print(f'Results for query: "{" ".join(query)}"')
         print('{} results found in {:.0f}ms'.format(self.all_results, self.time_needed_to_search))
         print("{:<12} {:<40} {}".format('Frequencies', 'Document', 'Snippets'))
         print("{} {} {}".format('-' * 12, '-' * 40, '-' * 80))
         for i in range(min(self.results_limit, len(pages))):
-            print("{:<12} {:<40} {}".format(frequencies[i], pages[i], '... ' + ' ... '.join(snippets[i]) + ' ...'))
+            print("{:<12} {:<40} {}".format(frequencies[i],
+                                            pages[i],
+                                            '... ' + ' ... '.join(snippets[i][:self.snippet_limit]) + ' ...'))
 
     def search_db(self, words):
         cursor = self.conn.cursor()
@@ -143,7 +139,8 @@ class SQLiteSearch:
                     w = w[1:]
                 if w not in self.stop_words_slovene:
                     word_tokens.append(w)
-            snippets.append(self.get_snip(tokens, indexes))
+            # snippets.append(self.get_snip(tokens, indexes))
+            snippets.append(self.snip.get_snip(tokens, indexes))
         self.print_results(words, frequencies, pages, snippets)
 
 
