@@ -1,6 +1,6 @@
 class Snippet:
 
-    def __init__(self, take_words: int = 3, results_limit: int = 10) -> None:
+    def __init__(self, take_words: int, results_limit: int) -> None:
         """
         This class is used for basic, no SQL searching.
 
