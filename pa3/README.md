@@ -23,6 +23,7 @@ Iskanje brez invertnega indeksa poženemo z ukazom `python run-basic-search.py P
 
 Obe skripti bosta po privzetem izdelali izseke rezultatov tako, da prikažeta +/-3 besede okoli najdene besede ter 10 datotek z najvišjim številom zadetkov. Te vrednosti lahko spremenimo v `__init__` funkciji posamezne skripte:
 ```python
+snippet_limit = 3  # stevilo posameznih izsekov, ki se izpisejo (tj. delov med "...")
 take_words = 3  # stevilo besed v izseku okoli najdene besede
 results_limit = 10  # stevilo rezultatov ob koncu izvajanja
 ```
