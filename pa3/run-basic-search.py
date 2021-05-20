@@ -13,7 +13,7 @@ from snippet import Snippet
 
 class BasicSearch:
 
-    def __init__(self, snippet_limit=3, char_limit=100, take_words: int = 3, results_limit: int = 10, data_dir: str = 'pages') -> None:
+    def __init__(self, snippet_limit: int = 3, char_limit: int = 100, take_words: int = 3, results_limit: int = 10, data_dir: str = 'pages') -> None:
         """
         This class is used for basic, no SQL searching.
 
