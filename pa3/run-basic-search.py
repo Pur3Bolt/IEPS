@@ -129,7 +129,7 @@ class BasicSearch:
         tokens = word_tokenize(document, language='Slovene', preserve_line=False)
         indexes = list()
         for i in range(len(tokens)):
-            token = tokens[i].lower().replace("'", "").replace("'", '')
+            token = tokens[i].lower().replace("'", "").replace("'", '').replace('`', '').replace('·', '')
             # skip if token doesn't contain letters
             if not re.search('[a-žA-ž]', token):
                 continue

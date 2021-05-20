@@ -84,7 +84,7 @@ class DataProcessing:
             index_words_with_index = []
             new_index_words = set()
             for i in range(len(tokens)):
-                a1 = tokens[i].lower().replace("'", "").replace("'", '')
+                a1 = tokens[i].lower().replace("'", "").replace("'", '').replace('`', '').replace('·', '')
                 if not re.search('[a-žA-ž]', a1):
                     continue
                 if len(a1) == 1 and not re.match("^[A-Ža-ž0-9]*$", a1):

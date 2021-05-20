@@ -128,7 +128,7 @@ class SQLiteSearch:
             tokens = nltk.word_tokenize(text, language='Slovene', preserve_line=False)
             word_tokens = []
             for i in range(len(tokens)):
-                w = tokens[i].lower()
+                w = tokens[i].lower().replace("'", "").replace("'", '').replace('`', '').replace('·', '')
                 if not re.search('[a-žA-ž]', w):
                     continue
                 if len(w) == 1 and not re.match("^[A-Ža-ž0-9]*$", w):
